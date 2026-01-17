@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tagebau Shop • Warenkorb</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="hazard top"></div>
+  <div class="hazard bottom"></div>
+
+  <header class="header">
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="landing.xhtml">
+          <img src="img/brand/logo-mark.svg" alt="Tagebau Heavy Machines" />
+          <span>
+            <span class="t1">Tagebau</span><br />
+            <span class="t2">Heavy Machines</span>
+          </span>
+        </a>
+
+        <nav class="nav" aria-label="Hauptnavigation">
+          <a class="" href="landing.xhtml">Shop</a>
+          <a class="" href="catalog.xhtml">Katalog</a>
+          <a class="" href="product.xhtml">Produkt</a>
+          <a class="active" href="cart.xhtml">Warenkorb</a>
+        </nav>
+
+        <div class="actions">
+          <form class="search" action="catalog.xhtml" method="get">
+            <img src="img/icons/ico-search-64.png" alt="" style="width:22px;height:22px;opacity:.9" />
+            <input type="text" name="q" value="" placeholder="Bagger, Muldenkipper, Bohrgerät …" />
+            <button class="btn hazard" type="submit">Suche</button>
+          </form>
+
+          <a class="cart" href="cart.xhtml" aria-label="Warenkorb">
+            <img src="img/icons/ico-cart-64.png" alt="" style="width:22px;height:22px;opacity:.9" />
+            <span class="label">Warenkorb</span>
+            <span class="badge" id="cartCount">2</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      
+<div class="content-head">
+  <div>
+    <div class="kicker">Warenkorb</div>
+    <h1 style="margin-top:8px">Positionen</h1>
+    <div class="muted" style="font-size:13px">(Später: <code>/api/cart</code>, <code>/api/cart/items</code>, <code>/api/cart/checkout</code>)</div>
+  </div>
+</div>
+
+<div class="cartlayout">
+  <section class="panel cartitems">
+    <div style="font-weight:900;padding-top:4px">Artikel</div>
+
+    <div class="cartrow">
+      <div class="thumb"><img src="img/products/dumptruck-160x90.png" alt="Muldenkipper" /></div>
+      <div>
+        <div class="t">Muldenkipper MT-220</div>
+        <div class="muted" style="font-size:12px">Nutzlast 220t • AWD</div>
+      </div>
+      <div class="qty">
+        <label>Menge</label>
+        <input type="number" min="1" value="1" />
+      </div>
+      <div class="p">3.200.000 €</div>
+      <div class="btnwrap" style="text-align:right">
+        <a class="btn ghost" href="#" onclick="return false;">Entfernen</a>
+      </div>
+    </div>
+
+    <div class="cartrow">
+      <div class="thumb"><img src="img/products/drillrig-160x90.png" alt="Bohrgerät" /></div>
+      <div>
+        <div class="t">Bohrgerät DR-45</div>
+        <div class="muted" style="font-size:12px">Bohrtiefe 45m • Staubschutz</div>
+      </div>
+      <div class="qty">
+        <label>Menge</label>
+        <input type="number" min="1" value="2" />
+      </div>
+      <div class="p">1.960.000 €</div>
+      <div class="btnwrap" style="text-align:right">
+        <a class="btn ghost" href="#" onclick="return false;">Entfernen</a>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel summary">
+    <div style="font-weight:900;padding-top:4px">Zusammenfassung</div>
+    <div class="sumrow"><span>Zwischensumme</span><span>5.160.000 €</span></div>
+    <div class="sumrow"><span>Versand/Logistik</span><span>auf Anfrage</span></div>
+    <div class="sumrow total"><span>Gesamt</span><span>5.160.000 €</span></div>
+
+    <div style="margin-top:12px;display:grid;gap:10px">
+      <a class="btn hazard" href="#" onclick="return false;">Zur Kasse</a>
+      <a class="btn ghost" href="#" onclick="return false;">Angebot als PDF</a>
+    </div>
+
+    <div class="muted" style="font-size:12px;margin-top:12px">
+      Hinweis: Bei Großmaschinen erfolgt Lieferung nach Projektplanung.
+    </div>
+  </aside>
+</div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="row">
+        <div>
+          <div style="font-weight:900">Tagebau Heavy Machines</div>
+          <div class="muted" style="font-size:12px">Static Demo • später via REST (OpenAPI) dynamisch füllen</div>
+        </div>
+        <div style="display:flex;gap:14px">
+          <a href="#" onclick="return false;">Impressum</a>
+          <a href="#" onclick="return false;">Datenschutz</a>
+          <a href="#" onclick="return false;">Kontakt</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
