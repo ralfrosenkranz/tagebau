@@ -3,7 +3,9 @@ package de.ralfrosenkranz.springboot.tagebau.server.model;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "catalogs")
@@ -38,4 +40,24 @@ public class Catalog {
     public void setCategories(List<Category> categories) { this.categories = categories; }
     public List<Product> getProducts() { return products; }
     public void setProducts(List<Product> products) { this.products = products; }
+
+    public List<Product> getProductsByCategoryId(String categoryId) {
+        List<Product> result;
+        if (categoryId != null) {
+            result = products.stream()
+                    .filter (product -> product.getCategoryId().equals(categoryId))
+                    .collect(Collectors.toList());
+        } else {
+            result = Collections.emptyList();
+        }
+        return result;
+    }
+
+    public Product getProductByProductId(String productId) {
+        Product result = products.stream ()
+                .filter (product -> product.getId().equals (productId))
+                .findFirst()
+                .orElse(null);
+        return result;
+    }
 }

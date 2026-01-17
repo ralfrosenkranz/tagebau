@@ -33,16 +33,16 @@
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
 
-    <!-- Thymeleaf -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-thymeleaf</artifactId>
-    </dependency>
-
     <!-- JPA (inkl. Jakarta Persistence API über Boot/Hibernate) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- Thymeleaf -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
 
     <!-- Validation: gleiche Boot-Linie (kein 2.7.x-Mix) -->
@@ -60,13 +60,11 @@
     </dependency>
 
     <!-- Optional: In-Memory DB für lokale Entwicklung -->
-    <!--
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
-    -->
 
     <!-- Optional: Security -->
     <!--

@@ -1,4 +1,4 @@
-package de.ralfrosenkranz.springboot.tagebau.tools.parser;
+package de.ralfrosenkranz.springboot.tagebau.tools.catalog;
 
 import de.ralfrosenkranz.springboot.tagebau.server.model.Catalog;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Category;

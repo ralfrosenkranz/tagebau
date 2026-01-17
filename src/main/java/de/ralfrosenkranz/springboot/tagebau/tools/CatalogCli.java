@@ -2,9 +2,9 @@ package de.ralfrosenkranz.springboot.tagebau.tools;
 
 import de.ralfrosenkranz.springboot.tagebau.tools.image.*;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Catalog;
-import de.ralfrosenkranz.springboot.tagebau.tools.parser.CatalogLinker;
-import de.ralfrosenkranz.springboot.tagebau.tools.parser.CatalogParser;
-import de.ralfrosenkranz.springboot.tagebau.tools.parser.CatalogValidator;
+import de.ralfrosenkranz.springboot.tagebau.tools.catalog.CatalogLinker;
+import de.ralfrosenkranz.springboot.tagebau.tools.catalog.CatalogParser;
+import de.ralfrosenkranz.springboot.tagebau.tools.catalog.CatalogValidator;
 
 import java.io.File;
 import java.nio.file.Path;

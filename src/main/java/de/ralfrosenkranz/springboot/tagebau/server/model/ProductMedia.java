@@ -25,4 +25,13 @@ public class ProductMedia {
     public void setProduct(Product product) { this.product = product; }
     public List<MediaImage> getImages() { return images; }
     public void setImages(List<MediaImage> images) { this.images = images; }
+
+    public String getFirstThumbnailFile() {
+        if ((images != null) && (images.size () > 0)) {
+            return images.getFirst().getThumbnailFile();
+        }
+        else {
+            return "";
+        }
+    }
 }

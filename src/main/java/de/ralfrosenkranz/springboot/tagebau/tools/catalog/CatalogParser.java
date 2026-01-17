@@ -1,17 +1,15 @@
-package de.ralfrosenkranz.springboot.tagebau.tools.parser;
+package de.ralfrosenkranz.springboot.tagebau.tools.catalog;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.ralfrosenkranz.springboot.tagebau.server.model.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class CatalogParser {
