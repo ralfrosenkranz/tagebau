@@ -1,0 +1,268 @@
+openapi: 3.0.3
+info:
+  title: Tagebau Shop API - Catalog
+  version: 0.1.0
+  description: |
+    REST-Schnittstellen fuer Katalogansicht (links Kategorien, rechts Produkte der selektierten Kategorie).
+    Basierend auf den Java-Modellklassen: Catalog, Category, Product (+ Pricing, Inventory, ProductMedia/MediaImage).
+servers:
+  - url: /api
+
+tags:
+  - name: Catalog
+  - name: Categories
+  - name: Products
+
+paths:
+  /catalog:
+    get:
+      tags: [Catalog]
+      summary: Katalog-Metadaten
+      operationId: getCatalog
+      responses:
+        '200':
+          description: Catalog Metadaten
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogInfo'
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Kategorien-Liste
+      operationId: listCategories
+      responses:
+        '200':
+          description: Kategorien
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /categories/{categoryId}/products:
+    get:
+      tags: [Products, Catalog]
+      summary: Produkte einer Kategorie (mit Filtern + Paging)
+      operationId: listProductsByCategory
+      parameters:
+        - in: path
+          name: categoryId
+          required: true
+          schema:
+            type: string
+            maxLength: 32
+        - in: query
+          name: condition
+          schema:
+            type: string
+            maxLength: 64
+          description: Filter nach Product.condition
+        - in: query
+          name: availability
+          schema:
+            type: string
+            maxLength: 64
+          description: Filter nach Inventory.availability
+        - in: query
+          name: minPrice
+          schema:
+            type: integer
+            format: int64
+          description: Minimum (Pricing.priceExorbitant)
+        - in: query
+          name: maxPrice
+          schema:
+            type: integer
+            format: int64
+          description: Maximum (Pricing.priceExorbitant)
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 24
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Sortierung (z.B. nickname,pricing.priceExorbitant)
+      responses:
+        '200':
+          description: Seite mit Produktkarten
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedProductCard'
+        '404':
+          description: Kategorie nicht gefunden
+
+  /products/{productId}/thumbnail:
+    get:
+      tags: [Products]
+      summary: Thumbnail-Info fuer ein Produkt
+      operationId: getProductThumbnail
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+            maxLength: 32
+      responses:
+        '200':
+          description: Thumbnail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaThumb'
+        '404':
+          description: Produkt nicht gefunden
+
+components:
+  schemas:
+    CatalogInfo:
+      type: object
+      additionalProperties: false
+      required: [id, schemaVersion, generatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Catalog.id (im Model: single-root)
+        schemaVersion:
+          type: string
+          maxLength: 32
+        generatedAt:
+          type: string
+          format: date-time
+          description: Catalog.generatedAt (Instant)
+        note:
+          type: string
+          nullable: true
+
+    Category:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          maxLength: 32
+        name:
+          type: string
+          maxLength: 255
+
+    PricingSummary:
+      type: object
+      additionalProperties: false
+      required: [currency, priceExorbitant, listPriceEvenMoreExorbitant]
+      properties:
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        priceExorbitant:
+          type: integer
+          format: int64
+        listPriceEvenMoreExorbitant:
+          type: integer
+          format: int64
+        vatNote:
+          type: string
+          nullable: true
+
+    InventorySummary:
+      type: object
+      additionalProperties: false
+      required: [stockQty, availability]
+      properties:
+        stockQty:
+          type: integer
+          format: int32
+          minimum: 0
+        availability:
+          type: string
+          maxLength: 64
+
+    MediaThumb:
+      type: object
+      additionalProperties: false
+      required: [thumbnailFile]
+      properties:
+        thumbnailFile:
+          type: string
+          maxLength: 512
+
+    ProductCard:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - sku
+        - categoryId
+        - categoryName
+        - technicalName
+        - nickname
+        - condition
+        - pricing
+        - inventory
+      properties:
+        id:
+          type: string
+          maxLength: 32
+        sku:
+          type: string
+          maxLength: 64
+        categoryId:
+          type: string
+          maxLength: 32
+        categoryName:
+          type: string
+          maxLength: 255
+        technicalName:
+          type: string
+          maxLength: 255
+        nickname:
+          type: string
+          maxLength: 255
+        condition:
+          type: string
+          maxLength: 64
+        shortDescription:
+          type: string
+          nullable: true
+        pricing:
+          $ref: '#/components/schemas/PricingSummary'
+        inventory:
+          $ref: '#/components/schemas/InventorySummary'
+        thumbnail:
+          $ref: '#/components/schemas/MediaThumb'
+
+    PagedProductCard:
+      type: object
+      additionalProperties: false
+      required: [items, page, size, totalItems]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductCard'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        totalItems:
+          type: integer
+          minimum: 0
