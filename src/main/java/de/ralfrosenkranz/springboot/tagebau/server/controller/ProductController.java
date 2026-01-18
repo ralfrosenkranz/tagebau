@@ -1,6 +1,7 @@
 package de.ralfrosenkranz.springboot.tagebau.server.controller;
 
 import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.InquiryRequestDTO;
+import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.MediaImageDTO;
 import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.ProductCardDTO;
 import de.ralfrosenkranz.springboot.tagebau.server.model.MediaImage;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Product;
@@ -12,6 +13,7 @@ import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -50,14 +52,21 @@ public class ProductController {
     }
 
     @GetMapping("/products/{productId}/media/images")
-    public ResponseEntity<List<MediaImage>> listProductImages(@PathVariable("productId") String productId) {
+    public ResponseEntity<List<MediaImageDTO>> listProductImages(@PathVariable("productId") String productId) {
         // TODO: MediaImages aus ProductMedia laden
 
         Product product = productService.getProductByTolerantProductId (productId);
         if (product != null) {
-            List<MediaImage> resp = product.getMedia().getImages();
-            return ResponseEntity.ok(Collections.emptyList());
-            //return ResponseEntity.ok(resp);
+            List<MediaImage> mediaImageList = product.getMedia().getImages();
+
+            List<MediaImageDTO> mediaImageDTOList = mediaImageList.stream().map(mediaImage -> {
+                MediaImageDTO dto = new MediaImageDTO();
+                dto.setFile(mediaImage.getFile());
+                dto.setThumbnailFile(mediaImage.getThumbnailFile());
+                return dto;
+            }).collect(Collectors.toList());
+
+            return ResponseEntity.ok(mediaImageDTOList);
         } else {
             return ResponseEntity.ok(Collections.emptyList());
         }

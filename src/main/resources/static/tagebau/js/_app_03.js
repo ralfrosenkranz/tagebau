@@ -18,9 +18,8 @@
 
   function _getSnapshot(el){
     if(!el) return "";
+    // Prefer form value if present, otherwise text
     if(typeof el.value === "string") return el.value;
-    // for <img>, track src
-    if(el.tagName && el.tagName.toLowerCase() === "img") return el.getAttribute("src") || "";
     return el.textContent || "";
   }
 
@@ -32,7 +31,10 @@
         return;
       }
       var e = el;
-      if(typeof el === "string"){ e = qs(el); if(!e) return; }
+      if(typeof el === "string"){
+        e = qs(el);
+        if(!e) return;
+      }
       if(!e.hasAttribute("data-dyn-before")){
         e.setAttribute("data-dyn-before", _getSnapshot(e));
       }
@@ -44,7 +46,11 @@
     if(!DEBUG_MARK_DYNAMIC || !el) return;
     try{
       var e = el;
-      if(typeof el === "string"){ e = qs(el); if(!e) return; }
+      if(typeof el === "string"){
+        e = qs(el);
+        if(!e) return;
+      }
+      // If no attempt was registered, register now with current default snapshot
       if(!e.hasAttribute("data-dyn-before")){
         e.setAttribute("data-dyn-before", _getSnapshot(e));
       }
@@ -52,7 +58,9 @@
       var after = _getSnapshot(e);
       var pv = (proposedValue === undefined || proposedValue === null) ? "" : String(proposedValue);
 
-      // Failure if server value is empty OR DOM unchanged from default
+      // Failure conditions:
+      // - server value empty OR
+      // - DOM value unchanged from default (before==after)
       var fail = (pv.trim() === "") || (before === after);
       _styleMark(e, !fail);
     }catch(_e){}
@@ -61,19 +69,9 @@
   function markDynamicSuccess(el){ _styleMark(el, true); }
   function markDynamicFail(el){ _styleMark(el, false); }
 
-  function dynText(el, value){
+  function setTextDyn(el, value){
     markDynamicAttempt(el);
     setText(el, value);
-    markDynamicResult(el, value);
-  }
-  function dynHtml(el, html, hasData){
-    markDynamicAttempt(el);
-    if(el) el.innerHTML = html;
-    markDynamicResult(el, hasData ? "non-empty" : "");
-  }
-  function dynAttr(el, attr, value){
-    markDynamicAttempt(el);
-    if(el) el.setAttribute(attr, value);
     markDynamicResult(el, value);
   }
 function qs(sel, root){ return (root||document).querySelector(sel); }
@@ -110,7 +108,8 @@ function qs(sel, root){ return (root||document).querySelector(sel); }
       if(cart && cart.items && cart.items.length){
         cart.items.forEach(function(it){ count += (it.quantity || 0); });
       }
-      dynText(badge, String(count));
+      badge.textContent = String(count);
+          markDynamicSuccess(badge);
 }catch(e){
       console.warn("Cart badge not updated (API unavailable):", e.message || e);
           markDynamicFail(badge);
@@ -150,35 +149,35 @@ function qs(sel, root){ return (root||document).querySelector(sel); }
     try{
       var landing = await api.getLanding(8);
       if(landing && landing.hero){
-        var _hk = qs('[data-hero-kicker]', root); dynText(_hk, landing.hero.kicker);
-var _ht = qs('[data-hero-title]', root); dynText(_ht, landing.hero.title);
-var _htext = qs('[data-hero-text]', root); dynText(_htext, landing.hero.text);
+        var _hk = qs('[data-hero-kicker]', root); setTextDyn(_hk, landing.hero.kicker);
+var _ht = qs('[data-hero-title]', root); setTextDyn(_ht, landing.hero.title);
+var _htext = qs('[data-hero-text]', root); setTextDyn(_htext, landing.hero.text);
 }
       if(landing && landing.categories && qs("#landingCategories", root)){
         var cl = qs("#landingCategories", root);
-        markDynamicAttempt(cl);
-        cl.innerHTML = "";
-landing.categories.forEach(function(c){
+        markDynamicAttempt(cl); cl.innerHTML = "";
+        landing.categories.forEach(function(c){
           var a = document.createElement("a");
           a.href = "catalog.xhtml?categoryId=" + encodeURIComponent(c.id || "");
           a.textContent = c.name || "Kategorie";
           a.className = "chip";
           cl.appendChild(a);
         });
-              markDynamicResult(cl, (landing.categories && landing.categories.length) ? 'non-empty' : '');
+              // Mark red if categories empty or unchanged
+        markDynamicResult(cl, landing.categories.length ? 'non-empty' : '');
 }
       var grid = qs("#topProducts", root);
       if(grid && landing && landing.topProducts){
         markDynamicAttempt(grid);
         grid.innerHTML = landing.topProducts.map(renderProductCard).join("");
         markDynamicResult(grid, (landing.topProducts && landing.topProducts.length) ? 'non-empty' : '');
-} else if(grid){
+      } else if(grid){
         var tops = await api.listTopProducts(8);
         if(Array.isArray(tops) && tops.length){
           markDynamicAttempt(grid);
           grid.innerHTML = tops.map(renderProductCard).join("");
           markDynamicResult(grid, (tops && tops.length) ? 'non-empty' : '');
-}
+        }
       }
     }catch(e){
       console.warn("Landing not populated (API unavailable):", e.message || e);
@@ -221,18 +220,14 @@ landing.categories.forEach(function(c){
 
     var catList = qs("#categoryList", root);
     var prodList = qs("#productList", root);
-    
-    // Debug: these areas are expected to be dynamically populated
-    markDynamicAttempt(catList);
-    markDynamicAttempt(prodList);
-var activeCategoryId = getParam("categoryId");
+    var activeCategoryId = getParam("categoryId");
 
     try{
       var cats = await api.listCategories();
-      if(Array.isArray(cats) && catList){
-        // green if non-empty, red if empty
-        if(!activeCategoryId && cats && cats.length){ activeCategoryId = String(cats[0].id || ""); }
-var header = catList.querySelector("div");
+      if(Array.isArray(cats) && cats.length && catList){
+        markDynamicAttempt(catList);
+        if(!activeCategoryId) activeCategoryId = String(cats[0].id || "");
+        var header = catList.querySelector("div");
         var hr = catList.querySelector("hr");
         catList.innerHTML = "";
         if(header){
@@ -266,14 +261,12 @@ var header = catList.querySelector("div");
     }catch(e){
       console.warn("Catalog not populated (API unavailable):", e.message || e);
       markDynamicFail(root);
-          markDynamicFail(catList);
-      markDynamicFail(prodList);
-}
+    }
 
     async function loadProducts(categoryId){
       if(!prodList) return;
-      if(!categoryId){ markDynamicFail(prodList); return; }
-var q = getParam("q") || undefined;
+      if(!categoryId) return;
+      var q = getParam("q") || undefined;
       var sort = getParam("sort") || "popularity";
       var page = Number(getParam("page") || 0);
       var size = Number(getParam("size") || 20);
@@ -294,7 +287,7 @@ var q = getParam("q") || undefined;
         markDynamicAttempt(prodList);
         prodList.innerHTML = headerHtml + items.map(renderRowProduct).join("");
         markDynamicResult(prodList, (items && items.length) ? 'non-empty' : '');
-var countEl = prodList.querySelector(".muted");
+        var countEl = prodList.querySelector(".muted");
         if(countEl) countEl.textContent = (total + " Treffer");
       }catch(e){
         console.warn("Category products not loaded:", e.message || e);
@@ -317,11 +310,11 @@ var countEl = prodList.querySelector(".muted");
     try{
       var prod = await api.getProduct(productId);
       if(prod){
-        dynText(titleEl, prod.nickname || prod.technicalName || prod.id || "");
-var currency = (prod.currency || (prod.pricing && prod.pricing.currency)) || "€";
+        setTextDyn(titleEl, prod.nickname || prod.technicalName || prod.id || "");
+        var currency = (prod.currency || (prod.pricing && prod.pricing.currency)) || "€";
         var amount = (prod.price || (prod.pricing && (prod.pricing.priceExorbitant || prod.pricing.priceCheap || prod.pricing.priceNormal))) || "";
         if(priceEl){ markDynamicAttempt(priceEl); priceEl.textContent = fmtMoney(amount, currency); markDynamicResult(priceEl, amount); }
-        if(descEl){ dynText(descEl, (prod.description || prod.technicalName || "")); }
+        if(descEl){ setTextDyn(descEl, (prod.description || prod.technicalName || "")); }
       }
     }catch(e){
       console.warn("Product not loaded:", e.message || e);
@@ -330,25 +323,17 @@ var currency = (prod.currency || (prod.pricing && prod.pricing.currency)) || "�
 
     var gallery = qs('[data-gallery="product"]', root);
     if(gallery){
-markDynamicAttempt(gallery);
-      markDynamicAttempt(main);
-      markDynamicAttempt(thumbs);
-try{
+      try{
         var imgs = await api.listProductImages(productId);
         if(Array.isArray(imgs) && imgs.length){
-          // if images array exists but yields no usable URLs, mark red
-
           var urls = imgs.map(function(mi){ return safeUrl(mi.file || mi.url || mi.path); }).filter(Boolean);
           if(urls.length){
-            // URLs exist
-
             var main = qs('[data-gallery-main]', gallery);
-            if(main){ dynAttr(main, "src", urls[0]); }
+            if(main){ markDynamicAttempt(main); main.setAttribute("src", urls[0]); markDynamicResult(main, urls[0]); }
             var thumbs = qs('[data-gallery-thumbs]', gallery);
             if(thumbs){
-              markDynamicAttempt(thumbs);
-              thumbs.innerHTML = "";
-urls.slice(0,3).forEach(function(u, idx){
+              markDynamicAttempt(thumbs); thumbs.innerHTML = "";
+              urls.slice(0,3).forEach(function(u, idx){
                 var btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = idx===0 ? "active" : "";
@@ -360,28 +345,16 @@ urls.slice(0,3).forEach(function(u, idx){
                 btn.appendChild(im);
                 btn.addEventListener("click", function(){
                   qsa("button", thumbs).forEach(function(b){ b.classList.remove("active"); });
-                                markDynamicResult(thumbs, (urls && urls.length) ? 'non-empty' : '');
-btn.classList.add("active");
+                  btn.classList.add("active");
                   if(main) main.setAttribute("src", u);
                 });
                 thumbs.appendChild(btn);
               });
             }
-            else {
-              // imgs returned but no usable urls
-              markDynamicFail(gallery);
-              markDynamicFail(main);
-              markDynamicFail(thumbs);
-            }
-          }
-          else {
-            // imgs empty
-            markDynamicFail(gallery);
-            markDynamicFail(main);
-            markDynamicFail(thumbs);
           }
         }
-      }catch(e){
+                    markDynamicResult(thumbs, (urls && urls.length) ? 'non-empty' : '');
+}catch(e){
         console.warn("Product images not loaded:", e.message || e);
         markDynamicFail(gallery);
       }
@@ -412,9 +385,8 @@ btn.classList.add("active");
           if(isFinite(n) && n > 0) qty = Math.floor(n);
         }
         try{
-          await api.addCartItem({ productId: productId, quantity: qty });
-          markDynamicResult(addBtn, "ok");
-await refreshCartBadge();
+          await api.addCartItem({ productId: productId, quantity: qty }); markDynamicSuccess(addBtn);
+          await refreshCartBadge();
           window.location.href = "cart.xhtml";
         }catch(e){
           console.warn("Add to cart failed:", e.message || e);
@@ -433,9 +405,8 @@ await refreshCartBadge();
     var totalEl = qs("#cartTotal", root);
     if(!itemsWrap) return;
 
-    markDynamicAttempt(itemsWrap);
-    itemsWrap.innerHTML = "";
-var currency = (cart && cart.currency) ? cart.currency : "€";
+    markDynamicAttempt(itemsWrap); itemsWrap.innerHTML = "";
+    var currency = (cart && cart.currency) ? cart.currency : "€";
     var total = (cart && cart.totalAmount) ? cart.totalAmount : "0";
     var subtotal = total;
     var items = (cart && Array.isArray(cart.items)) ? cart.items : [];
@@ -494,7 +465,7 @@ var currency = (cart && cart.currency) ? cart.currency : "€";
       });
     }
 
-    markDynamicResult(itemsWrap, (items && items.length) ? 'non-empty' : '');
+    if(subtotalEl){    markDynamicResult(itemsWrap, itemsWrap.textContent && itemsWrap.textContent.trim() ? 'non-empty' : '');
 
     if(subtotalEl){ markDynamicAttempt(subtotalEl); subtotalEl.textContent = fmtMoney(subtotal, currency); markDynamicResult(subtotalEl, subtotal); }
     if(totalEl){ markDynamicAttempt(totalEl); totalEl.textContent = fmtMoney(total, currency); markDynamicResult(totalEl, total); }
@@ -523,9 +494,8 @@ var currency = (cart && cart.currency) ? cart.currency : "€";
       checkoutBtn.addEventListener("click", async function(ev){
         ev.preventDefault();
         try{
-          var order = await api.checkout({ note: "Demo checkout" });
-          markDynamicResult(checkoutBtn, (order && order.id) ? String(order.id) : "");
-alert("Checkout erfolgreich. Order-ID: " + (order && order.id ? order.id : "(unbekannt)"));
+          var order = await api.checkout({ note: "Demo checkout" }); markDynamicResult(checkoutBtn, (order && order.id) ? String(order.id) : "");
+          alert("Checkout erfolgreich. Order-ID: " + (order && order.id ? order.id : "(unbekannt)"));
           await loadCart();
         }catch(e){
           console.warn("Checkout failed:", e.message || e);

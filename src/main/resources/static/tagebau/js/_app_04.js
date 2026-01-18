@@ -221,18 +221,14 @@ landing.categories.forEach(function(c){
 
     var catList = qs("#categoryList", root);
     var prodList = qs("#productList", root);
-    
-    // Debug: these areas are expected to be dynamically populated
-    markDynamicAttempt(catList);
-    markDynamicAttempt(prodList);
-var activeCategoryId = getParam("categoryId");
+    var activeCategoryId = getParam("categoryId");
 
     try{
       var cats = await api.listCategories();
-      if(Array.isArray(cats) && catList){
-        // green if non-empty, red if empty
-        if(!activeCategoryId && cats && cats.length){ activeCategoryId = String(cats[0].id || ""); }
-var header = catList.querySelector("div");
+      if(Array.isArray(cats) && cats.length && catList){
+        markDynamicAttempt(catList);
+if(!activeCategoryId) activeCategoryId = String(cats[0].id || "");
+        var header = catList.querySelector("div");
         var hr = catList.querySelector("hr");
         catList.innerHTML = "";
         if(header){
@@ -266,14 +262,12 @@ var header = catList.querySelector("div");
     }catch(e){
       console.warn("Catalog not populated (API unavailable):", e.message || e);
       markDynamicFail(root);
-          markDynamicFail(catList);
-      markDynamicFail(prodList);
-}
+    }
 
     async function loadProducts(categoryId){
       if(!prodList) return;
-      if(!categoryId){ markDynamicFail(prodList); return; }
-var q = getParam("q") || undefined;
+      if(!categoryId) return;
+      var q = getParam("q") || undefined;
       var sort = getParam("sort") || "popularity";
       var page = Number(getParam("page") || 0);
       var size = Number(getParam("size") || 20);
@@ -330,18 +324,11 @@ var currency = (prod.currency || (prod.pricing && prod.pricing.currency)) || "â‚
 
     var gallery = qs('[data-gallery="product"]', root);
     if(gallery){
-markDynamicAttempt(gallery);
-      markDynamicAttempt(main);
-      markDynamicAttempt(thumbs);
-try{
+      try{
         var imgs = await api.listProductImages(productId);
         if(Array.isArray(imgs) && imgs.length){
-          // if images array exists but yields no usable URLs, mark red
-
           var urls = imgs.map(function(mi){ return safeUrl(mi.file || mi.url || mi.path); }).filter(Boolean);
           if(urls.length){
-            // URLs exist
-
             var main = qs('[data-gallery-main]', gallery);
             if(main){ dynAttr(main, "src", urls[0]); }
             var thumbs = qs('[data-gallery-thumbs]', gallery);
@@ -367,18 +354,6 @@ btn.classList.add("active");
                 thumbs.appendChild(btn);
               });
             }
-            else {
-              // imgs returned but no usable urls
-              markDynamicFail(gallery);
-              markDynamicFail(main);
-              markDynamicFail(thumbs);
-            }
-          }
-          else {
-            // imgs empty
-            markDynamicFail(gallery);
-            markDynamicFail(main);
-            markDynamicFail(thumbs);
           }
         }
       }catch(e){
