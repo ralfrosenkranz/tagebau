@@ -21,9 +21,9 @@ public class LandingController {
         // TODO: mit Services/Repositories verbinden
         LandingResponseDTO resp = new LandingResponseDTO();
         LandingResponseDTO.Hero hero = new LandingResponseDTO.Hero();
-        hero.setKicker("Schwere Maschinen • Tagebau • 24/7 Ersatzteile");
-        hero.setTitle("Bagger, Muldenkipper & Bohrgeräte für den Tagebau");
-        hero.setText("Robuste Technik. Hohe Nutzlast. Einsatzbereit für extreme Bedingungen.");
+        hero.setKicker("HURTZ Schwere Maschinen • Tagebau • 24/7 Ersatzteile");
+        hero.setTitle("WURTZ Bagger, Muldenkipper & Bohrgeräte für den Tagebau");
+        hero.setText("ZUTZEL Robuste Technik. Hohe Nutzlast. Einsatzbereit für extreme Bedingungen.");
         resp.setHero(hero);
         resp.setTopProducts(Collections.emptyList());
         resp.setCategories(Collections.emptyList());

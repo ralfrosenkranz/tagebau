@@ -1,8 +1,11 @@
 package de.ralfrosenkranz.springboot.tagebau.server.controller;
 
 import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.InquiryRequestDTO;
+import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.ProductCardDTO;
 import de.ralfrosenkranz.springboot.tagebau.server.model.MediaImage;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Product;
+import de.ralfrosenkranz.springboot.tagebau.server.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.SessionScope;
@@ -15,16 +18,49 @@ import java.util.List;
 @SessionScope
 public class ProductController {
 
+    @Autowired
+    ProductService productService;
+
     @GetMapping("/products/{productId}")
-    public ResponseEntity<Product> getProduct(@PathVariable("productId") String productId) {
+    public ResponseEntity<ProductCardDTO> getProduct(@PathVariable("productId") String productId) {
         // TODO: Produkt inkl. OneToOne Relationen laden (Specs/Pricing/Inventory/Shipping/Media)
-        return ResponseEntity.notFound().build();
+
+        Product product = productService.getProductByTolerantProductId (productId);
+
+        if (product != null) {
+            ProductCardDTO resp = new ProductCardDTO();
+
+            resp.setId(product.getId());
+            resp.setTechnicalName(product.getTechnicalName());
+            resp.setNickname(product.getNickname());
+
+            // Set price information
+            ProductCardDTO.PriceView priceView = new ProductCardDTO.PriceView();
+            priceView.setCurrency("EUR");
+            priceView.setAmount(product.getPricing().getPriceExorbitant().toString());
+            resp.setPriceView(priceView);
+
+            // Set thumbnail URL
+            resp.setThumbnailUrl(product.getMedia().getFirstThumbnailFile());
+
+            return ResponseEntity.ok(resp);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @GetMapping("/products/{productId}/media/images")
     public ResponseEntity<List<MediaImage>> listProductImages(@PathVariable("productId") String productId) {
         // TODO: MediaImages aus ProductMedia laden
-        return ResponseEntity.ok(Collections.emptyList());
+
+        Product product = productService.getProductByTolerantProductId (productId);
+        if (product != null) {
+            List<MediaImage> resp = product.getMedia().getImages();
+            return ResponseEntity.ok(Collections.emptyList());
+            //return ResponseEntity.ok(resp);
+        } else {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
     }
 
     @GetMapping("/products/{productId}/related")

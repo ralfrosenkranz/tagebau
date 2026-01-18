@@ -64,7 +64,7 @@ public class CatalogController {
                     ProductCardDTO.PriceView priceView = new ProductCardDTO.PriceView();
                     priceView.setCurrency("EUR");
                     priceView.setAmount(product.getPricing().getPriceExorbitant().toString());
-                    dto.setPrice(priceView);
+                    dto.setPriceView(priceView);
                     dto.setThumbnailUrl(product.getMedia().getFirstThumbnailFile());
                     // Set other properties as needed
                     return dto;
