@@ -618,7 +618,7 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
       prod = await api.getProduct(productId);
 
       if(prod){
-        if(titleEl) dynText(titleEl, prod.nickname || prod.technicalName || prod.id || "");
+        if(titleEl) dynText(titleEl, prod.technicalName || prod.nickname || prod.id || "");
         if(skuEl) dynText(skuEl, prod.sku || "");
         if(catEl) dynText(catEl, prod.categoryName || prod.categoryId || "");
         if(condEl) dynText(condEl, prod.condition || "");

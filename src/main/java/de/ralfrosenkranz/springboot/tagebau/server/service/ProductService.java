@@ -5,6 +5,9 @@ import de.ralfrosenkranz.springboot.tagebau.server.model.Catalog;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Product;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class ProductService {
 
@@ -52,5 +55,21 @@ public class ProductService {
         String productId = getValidProductId(tolerantProductId);
         Product product = getCatalog().getProductByProductId(productId);
         return product;
+    }
+
+    public List<Product> getRelatedProductsByProductId(String productId, int limit) {
+        List<Product> resultProductList = new ArrayList<>();
+        List<Product> productList = getCatalog().getProducts();
+        Product product = getProductByTolerantProductId(productId);
+
+        if (product != null) {
+            productList.stream()
+                    .filter(anotherProduct -> anotherProduct.getCategoryId().equals(product.getCategoryId()))
+                    .filter(anotherProduct -> !(anotherProduct.getId().equals(product.getId())))
+                    .limit(limit)
+                    .forEach(resultProduct -> resultProductList.add(resultProduct));
+        }
+
+        return resultProductList;
     }
 }

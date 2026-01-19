@@ -17,7 +17,7 @@ public class ProductCardDTO {
     private String status;
     private String createdAt;
     private String updatedAt;
-    private ProductSpecsDTO productSpecs;
+    private ProductSpecsDTO specs;
     private InventoryDTO inventory;
     private ShippingDTO shipping;
     private List<MediaImageDTO> mediaImages;
@@ -66,8 +66,8 @@ public class ProductCardDTO {
     public String getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 
-    public ProductSpecsDTO getProductSpecs() { return productSpecs; }
-    public void setProductSpecs(ProductSpecsDTO productSpecs) { this.productSpecs = productSpecs; }
+    public ProductSpecsDTO getSpecs() { return specs; }
+    public void setSpecs(ProductSpecsDTO specs) { this.specs = specs; }
 
     public InventoryDTO getInventory() { return inventory; }
     public void setInventory(InventoryDTO inventory) { this.inventory = inventory; }
@@ -109,18 +109,67 @@ public class ProductCardDTO {
     }
 
     public static class ProductSpecsDTO {
-        private String weight;
-        private String dimensions;
-        private String material;
-        private String color;
-        public String getWeight() { return weight; }
-        public void setWeight(String weight) { this.weight = weight; }
-        public String getDimensions() { return dimensions; }
-        public void setDimensions(String dimensions) { this.dimensions = dimensions; }
-        public String getMaterial() { return material; }
-        public void setMaterial(String material) { this.material = material; }
-        public String getColor() { return color; }
-        public void setColor(String color) { this.color = color; }
+        private String machineType;
+        private Double operatingWeightT;
+        private Double bucketCapacityM3;
+        private Integer enginePowerKw;
+        private Integer hoursUsed;
+        private Double boomLengthM;
+        private Double payloadT;
+        private String tireSize;
+        private Double throughputTph;
+        private Integer beltWidthMm;
+        private Double wheelDiameterM;
+        private Integer bucketCount;
+        private Double bladeCapacityM3;
+        private Integer holeDiameterMm;
+        private Double maxHoleDepthM;
+
+        // Getter and Setter methods
+        public String getMachineType() { return machineType; }
+        public void setMachineType(String machineType) { this.machineType = machineType; }
+
+        public Double getOperatingWeightT() { return operatingWeightT; }
+        public void setOperatingWeightT(Double operatingWeightT) { this.operatingWeightT = operatingWeightT; }
+
+        public Double getBucketCapacityM3() { return bucketCapacityM3; }
+        public void setBucketCapacityM3(Double bucketCapacityM3) { this.bucketCapacityM3 = bucketCapacityM3; }
+
+        public Integer getEnginePowerKw() { return enginePowerKw; }
+        public void setEnginePowerKw(Integer enginePowerKw) { this.enginePowerKw = enginePowerKw; }
+
+        public Integer getHoursUsed() { return hoursUsed; }
+        public void setHoursUsed(Integer hoursUsed) { this.hoursUsed = hoursUsed; }
+
+        public Double getBoomLengthM() { return boomLengthM; }
+        public void setBoomLengthM(Double boomLengthM) { this.boomLengthM = boomLengthM; }
+
+        public Double getPayloadT() { return payloadT; }
+        public void setPayloadT(Double payloadT) { this.payloadT = payloadT; }
+
+        public String getTireSize() { return tireSize; }
+        public void setTireSize(String tireSize) { this.tireSize = tireSize; }
+
+        public Double getThroughputTph() { return throughputTph; }
+        public void setThroughputTph(Double throughputTph) { this.throughputTph = throughputTph; }
+
+        public Integer getBeltWidthMm() { return beltWidthMm; }
+        public void setBeltWidthMm(Integer beltWidthMm) { this.beltWidthMm = beltWidthMm; }
+
+        public Double getWheelDiameterM() { return wheelDiameterM; }
+        public void setWheelDiameterM(Double wheelDiameterM) { this.wheelDiameterM = wheelDiameterM; }
+
+        public Integer getBucketCount() { return bucketCount; }
+        public void setBucketCount(Integer bucketCount) { this.bucketCount = bucketCount; }
+
+        public Double getBladeCapacityM3() { return bladeCapacityM3; }
+        public void setBladeCapacityM3(Double bladeCapacityM3) { this.bladeCapacityM3 = bladeCapacityM3; }
+
+        public Integer getHoleDiameterMm() { return holeDiameterMm; }
+        public void setHoleDiameterMm(Integer holeDiameterMm) { this.holeDiameterMm = holeDiameterMm; }
+
+        public Double getMaxHoleDepthM() { return maxHoleDepthM; }
+        public void setMaxHoleDepthM(Double maxHoleDepthM) { this.maxHoleDepthM = maxHoleDepthM; }
     }
 
     public static class InventoryDTO {
