@@ -61,10 +61,10 @@ public class CatalogController {
                     dto.setId(product.getId());
                     dto.setTechnicalName(product.getTechnicalName());
                     dto.setNickname(product.getNickname());
-                    ProductCardDTO.PriceView priceView = new ProductCardDTO.PriceView();
-                    priceView.setCurrency("EUR");
-                    priceView.setAmount(product.getPricing().getPriceExorbitant().toString());
-                    dto.setPriceView(priceView);
+                    ProductCardDTO.PricingDTO pricingDTO = new ProductCardDTO.PricingDTO();
+                    pricingDTO.setCurrency("EUR");
+                    pricingDTO.setPriceExorbitant(product.getPricing().getPriceExorbitant().toString());
+                    dto.setPricing(pricingDTO);
                     dto.setThumbnailUrl(product.getMedia().getFirstThumbnailFile());
                     // Set other properties as needed
                     return dto;
