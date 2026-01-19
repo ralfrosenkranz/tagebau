@@ -3,7 +3,7 @@
     // ---- Debug: mark dynamically updated DOM elements ----
     // Green = update succeeded (value changed from default and is non-empty),
     // Red   = update attempted but result is unchanged from default OR empty (e.g., server returned empty/invalid data).
-    var DEBUG_MARK_DYNAMIC = true;
+    var DEBUG_MARK_DYNAMIC = false;
 
     function _styleMark(e, ok) {
         if (!DEBUG_MARK_DYNAMIC || !e) return;
@@ -133,6 +133,85 @@
             return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;"})[c];
         });
     }
+
+  // Minimal Markdown renderer (safe: escapes HTML first).
+  // Supports: headings (#, ##, ###), bold/italic, inline code, fenced code blocks, lists, blockquotes, links.
+  function renderMarkdown(md){
+    md = (md === undefined || md === null) ? "" : String(md);
+    if(md.trim() === "") return "";
+    md = md.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+    // Extract fenced code blocks first
+    var codeBlocks = [];
+    md = md.replace(/```([\s\S]*?)```/g, function(_, code){
+      var i = codeBlocks.length;
+      codeBlocks.push(code);
+      return "§§CODEBLOCK_" + i + "§§";
+    });
+
+    // Escape everything (prevents HTML injection)
+    md = escapeHtml(md);
+
+    // Blockquotes
+    md = md.replace(/^&gt;\s?(.*)$/gm, function(_, line){
+      return "<blockquote>" + line + "</blockquote>";
+    });
+
+    // Headings
+    md = md.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+    md = md.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+    md = md.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+
+    // Lists (basic)
+    function renderList(block, ordered){
+      var items = block.split("\n").filter(Boolean).map(function(l){
+        if(ordered){ return l.replace(/^\d+\.\s+/, ""); }
+        return l.replace(/^[\-\*]\s+/, "");
+      }).map(function(t){ return "<li>" + t + "</li>"; }).join("");
+      return ordered ? ("<ol>" + items + "</ol>") : ("<ul>" + items + "</ul>");
+    }
+    md = md.replace(/(^(\d+\.\s+.*)(\n\d+\.\s+.*)+)/gm, function(m0){ return renderList(m0, true); });
+    md = md.replace(/(^([\-\*]\s+.*)(\n[\-\*]\s+.*)+)/gm, function(m0){ return renderList(m0, false); });
+
+    // Paragraphs for remaining chunks
+    md = md.split("\n\n").map(function(part){
+      part = part.trim();
+      if(part === "") return "";
+      if(part.match(/^<(h1|h2|h3|ul|ol|blockquote|pre)\b/)) return part;
+      return "<p>" + part.replace(/\n/g, "<br />") + "</p>";
+    }).join("\n");
+
+    // Inline code
+    md = md.replace(/`([^`]+)`/g, "<code>$1</code>");
+    // Bold and italic
+    md = md.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    md = md.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+    // Links [text](url)
+    md = md.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    // Restore code blocks
+    md = md.replace(/§§CODEBLOCK_(\d+)§§/g, function(_, idx){
+      var code = (codeBlocks[Number(idx)] || "");
+      code = escapeHtml(code);
+      return "<pre><code>" + code + "</code></pre>";
+    });
+
+    return md;
+  }
+
+  // Mark image elements red if they fail to load (helps debugging wrong URLs)
+  function attachImageDebug(imgEl){
+    if(!imgEl) return;
+    try{
+      imgEl.addEventListener("error", function(){
+        if(typeof markDynamicFail === "function") markDynamicFail(imgEl);
+      });
+      imgEl.addEventListener("load", function(){
+        if(typeof markDynamicResult === "function") markDynamicResult(imgEl, imgEl.getAttribute("src") || "ok");
+      });
+    }catch(_e){}
+  }
 
     var api = new window.TagebauApi.ApiClient({baseUrl: "/api"});
 
@@ -376,7 +455,9 @@
 
     var gallery = qs('[data-gallery="product"]', root);
     var mainImg = gallery ? qs('[data-gallery-main]', gallery) : null;
-    var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
+    
+    attachImageDebug(mainImg);
+var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
     var prevBtn = gallery ? qs('[data-gallery-prev]', gallery) : null;
     var nextBtn = gallery ? qs('[data-gallery-next]', gallery) : null;
 
@@ -505,6 +586,7 @@
         var im = document.createElement("img");
         im.src = u;
         im.alt = "Ansicht " + (idx + 1);
+        attachImageDebug(im);
         btn.appendChild(im);
         btn.addEventListener("click", function(){
           qsa('button[data-gallery-thumb]', thumbsWrap).forEach(function(b){ b.classList.remove("active"); });
@@ -554,7 +636,7 @@
         if(longEl){
           // keep markdown as-is; scrollable pre box
           if(typeof markDynamicAttempt === "function") markDynamicAttempt(longEl);
-          longEl.textContent = prod.longDescriptionMarkdown || "";
+          longEl.innerHTML = renderMarkdown(prod.longDescriptionMarkdown || "");
           if(typeof markDynamicResult === "function") markDynamicResult(longEl, prod.longDescriptionMarkdown || "");
         }
 

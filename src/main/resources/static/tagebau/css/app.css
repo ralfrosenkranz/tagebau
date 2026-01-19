@@ -373,21 +373,6 @@ body.product-page{ overflow:hidden; }
 body.product-page .main{ height: calc(100vh - (var(--haz-h) * 2)); overflow:auto; }
 
 /* Long description markdown box */
-.markdown-box{
-  white-space: pre-wrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: rgba(232,238,246,.92);
-  background: rgba(15,18,22,.28);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 18px;
-  padding: 12px;
-  margin: 10px 0 0 0;
-  max-height: 260px;
-  overflow:auto;
-}
-
 /* Specs grid: allow more columns on wide screens */
 .specs-grid{
   display:grid;
@@ -462,3 +447,55 @@ body.product-page .gallery .thumbs img{
   object-fit: cover;
   display:block;
 }
+
+/* Long description markdown rendering (not scrollable) */
+.markdown-render{
+  white-space: normal;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(232,238,246,.92);
+  background: rgba(15,18,22,.28);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  padding: 12px 14px;
+  margin: 10px 0 0 0;
+}
+.markdown-render h1, .markdown-render h2, .markdown-render h3{
+  margin: 14px 0 8px 0;
+  line-height: 1.15;
+}
+.markdown-render h1{ font-size: 20px; }
+.markdown-render h2{ font-size: 17px; }
+.markdown-render h3{ font-size: 15px; }
+.markdown-render p{ margin: 8px 0; }
+.markdown-render ul, .markdown-render ol{ margin: 8px 0 8px 20px; }
+.markdown-render li{ margin: 4px 0; }
+.markdown-render code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.markdown-render pre{
+  margin: 10px 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+}
+.markdown-render pre code{
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.markdown-render blockquote{
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-left: 3px solid rgba(255, 204, 0, .55);
+  background: rgba(255,204,0,.06);
+  border-radius: 12px;
+}
+.markdown-render a{ color: rgba(255, 204, 0, .92); text-decoration: none; }
+.markdown-render a:hover{ text-decoration: underline; }
