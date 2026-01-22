@@ -26,7 +26,7 @@ public class Product {
     @Column(nullable = false, length = 255)
     private String nickname;
 
-    @Column(nullable = false, length = 64)
+    @Column(name = "actual_condition", nullable = false, length = 64)
     private String condition;
 
     @Column(name = "short_description")

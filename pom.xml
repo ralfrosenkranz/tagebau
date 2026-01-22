@@ -23,7 +23,8 @@
   <properties>
     <!-- Hinweis: Java 25 ist für Boot 3.3.4 nicht zuverlässig belegbar; daher auf eine gängige Boot-3.x-Baseline gesetzt. -->
     <java.version>21</java.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>    
+    <start-class>de.ralfrosenkranz.springboot.tagebau.Tagebau</start-class>
   </properties>
 
   <dependencies>
