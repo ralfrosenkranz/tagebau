@@ -11,20 +11,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.file.Path;
 
 @SpringBootApplication
-public class Tagebau {
+public class Tagebau extends SpringBootServletInitializer {
 
     private static Logger log = LoggerFactory.getLogger(Tagebau.class);
 
+    @Override
+    protected SpringApplicationBuilder
+    configure(SpringApplicationBuilder application) {
+        return application.sources(Tagebau.class);
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(Tagebau.class, args);
     }
+
+//    @Override
+//    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+//        return super.configure(builder);
+//    }
+
+//    public static void main(String[] args) {
+//        SpringApplication.run(Tagebau.class, args);
+//    }
 
 
     private Catalog loadLinkedValidated(Path json) throws Exception {
@@ -35,6 +51,8 @@ public class Tagebau {
         new CatalogValidator().validate(catalog);
         return catalog;
     }
+
+
 
 
     @Component

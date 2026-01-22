@@ -1,6 +1,7 @@
 package de.ralfrosenkranz.springboot.tagebau.server.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.PrimaryKeyJoinColumn;
 
 @Entity
 @Table(name = "inventory")
@@ -12,7 +13,7 @@ public class Inventory {
 
     @OneToOne(optional = false)
     @MapsId
-    @JoinColumn(name = "product_id")
+    @PrimaryKeyJoinColumn
     private Product product;
 
     @Column(name = "stock_qty", nullable = false)
