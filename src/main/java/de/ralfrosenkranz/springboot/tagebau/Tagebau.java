@@ -1,6 +1,8 @@
 package de.ralfrosenkranz.springboot.tagebau;
 
 import de.ralfrosenkranz.springboot.tagebau.server.model.Catalog;
+import de.ralfrosenkranz.springboot.tagebau.server.model.Category;
+import de.ralfrosenkranz.springboot.tagebau.server.model.Product;
 import de.ralfrosenkranz.springboot.tagebau.server.repository.CatalogRepository;
 import de.ralfrosenkranz.springboot.tagebau.tools.catalog.CatalogLinker;
 import de.ralfrosenkranz.springboot.tagebau.tools.catalog.CatalogParser;
@@ -16,11 +18,18 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import javax.sql.DataSource;
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootApplication
 public class Tagebau extends SpringBootServletInitializer {
@@ -76,6 +85,23 @@ public class Tagebau extends SpringBootServletInitializer {
 
         @Autowired
         CatalogRepository catalogRepository;
+
+        @PersistenceContext
+        EntityManager entityManager;
+
+        private final PlatformTransactionManager transactionManager;
+        private final TransactionTemplate txTemplate;
+
+        public StartupListener(
+                CatalogRepository catalogRepository,
+                EntityManager entityManager,
+                PlatformTransactionManager transactionManager
+        ) {
+            this.catalogRepository = catalogRepository;
+            this.entityManager = entityManager;
+            this.transactionManager = transactionManager;
+            this.txTemplate = new TransactionTemplate(transactionManager);
+        }
 
         @Override
         public void run(ApplicationArguments args) {
@@ -149,21 +175,97 @@ public class Tagebau extends SpringBootServletInitializer {
                 // In-Memory für die aktuelle Laufzeit verfügbar machen
                 catalog = demo;
 
-                // Optional: Wenn DB erreichbar ist, Demo-Daten persistieren, damit beim nächsten Start nicht erneut initialisiert wird.
-                tryPersistDemoCatalog(demo);
+                // Wenn DB erreichbar ist: Demo-Daten persistieren (inkl. aller durch Parser/Linker gemachten Beziehungen)
+                // und als "Single Root" (id=1) in der DB upserten.
+                // Damit werden die Änderungen nicht nur in-memory gehalten, sondern landen auch dauerhaft in der DB.
+                tryPersistDemoCatalogGraph(demo);
 
             } catch (Exception e) {
                 log.error("ERROR loading Demo-Catalog", e);
             }
         }
 
-        @Transactional
-        protected void tryPersistDemoCatalog(Catalog demo) {
+        /**
+         * Persistiert den Demo-Katalog in die DB.
+         *
+         * Hintergrund: Das Parsen/Linken erzeugt in-memory Relationen (z.B. Product.category, Category.catalog, Product.specs.product …).
+         * Damit diese Änderungen auch in der DB ankommen, wird hier ein "Upsert" des gesamten Katalog-Objektgraphen durchgeführt.
+         *
+         * Vorgehen:
+         * - Wenn kein Root-Catalog existiert: demo direkt speichern (Cascade persist).
+         * - Wenn Root-Catalog existiert: bestehenden Katalog laden, Collections leeren (orphanRemoval), neu befüllen, speichern.
+         */
+        protected void tryPersistDemoCatalogGraph(Catalog demo) {
             try (Connection ignored = dataSource.getConnection()) {
-                // save() cascaded Categories/Products, sofern der Parser/Linker die Relationen korrekt setzt
-                catalogRepository.save(demo);
+
+                Catalog saved = txTemplate.execute(status -> upsertSingleRootCatalog(demo));
+
+                if (saved != null) {
+                    // Für die laufende App den persistierten Stand verwenden (inkl. IDs/managed graph)
+                    catalog = saved;
+                }
+
             } catch (Exception e) {
                 log.warn("Demo-Katalog konnte nicht in die DB geschrieben werden (weiter mit In-Memory).", e);
+            }
+}
+
+        private Catalog upsertSingleRootCatalog(Catalog demo) {
+            final Long ROOT_ID = 1L;
+
+            // Defensive: Relationen vor Persistenz sicher setzen
+            enforceBackReferences(demo);
+
+            // WICHTIG: Spring Data "save" würde bei gesetzter ID immer "merge" nutzen.
+            // Bei assigned IDs (z.B. prod-0001) führt merge dazu, dass Hibernate versucht,
+            // die Entitäten zuerst zu laden. Wenn sie nicht existieren, kann das in
+            // EntityNotFoundException/JpaObjectRetrievalFailureException enden.
+            //
+            // Deshalb: echter Upsert über "delete + persist".
+
+            if (catalogRepository.existsById(ROOT_ID)) {
+                catalogRepository.deleteById(ROOT_ID);
+                catalogRepository.flush();
+                // Sicherstellen, dass der Persistence Context keine Reste des gelöschten Graphen hält
+                entityManager.clear();
+            }
+
+            entityManager.persist(demo);
+            entityManager.flush();
+            return demo;
+        }
+
+        private void enforceBackReferences(Catalog c) {
+            if (c == null) return;
+            if (c.getCategories() != null) {
+                for (Category cat : c.getCategories()) {
+                    cat.setCatalog(c);
+                }
+            }
+            Map<String, Category> byId = new HashMap<>();
+            if (c.getCategories() != null) {
+                for (Category cat : c.getCategories()) {
+                    byId.put(cat.getId(), cat);
+                }
+            }
+            if (c.getProducts() != null) {
+                for (Product p : c.getProducts()) {
+                    p.setCatalog(c);
+                    if (p.getCategory() == null) {
+                        Category cat = byId.get(p.getCategoryId());
+                        if (cat != null) p.setCategory(cat);
+                    }
+                    if (p.getSpecs() != null) p.getSpecs().setProduct(p);
+                    if (p.getPricing() != null) p.getPricing().setProduct(p);
+                    if (p.getInventory() != null) p.getInventory().setProduct(p);
+                    if (p.getShipping() != null) p.getShipping().setProduct(p);
+                    if (p.getMedia() != null) {
+                        p.getMedia().setProduct(p);
+                        if (p.getMedia().getImages() != null) {
+                            p.getMedia().getImages().forEach(img -> img.setMedia(p.getMedia()));
+                        }
+                    }
+                }
             }
         }
     }

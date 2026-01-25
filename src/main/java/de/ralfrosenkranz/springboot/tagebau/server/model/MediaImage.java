@@ -26,7 +26,7 @@ public class MediaImage {
     @Column(name = "thumbnail_file", nullable = false, length = 512)
     private String thumbnailFile;
 
-    @Column(name = "generation_prompt")
+    @Column(name = "generation_prompt", columnDefinition = "TEXT")
     private String generationPrompt;
 
     public Long getId() { return id; }

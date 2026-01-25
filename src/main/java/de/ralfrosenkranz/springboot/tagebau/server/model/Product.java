@@ -32,7 +32,7 @@ public class Product {
     @Column(name = "short_description")
     private String shortDescription;
 
-    @Column(name = "long_description_markdown")
+    @Column(name = "long_description_markdown", columnDefinition = "TEXT")
     private String longDescriptionMarkdown;
 
     @ManyToOne(optional = false)

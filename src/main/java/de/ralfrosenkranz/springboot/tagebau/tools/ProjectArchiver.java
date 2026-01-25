@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -19,9 +21,13 @@ public class ProjectArchiver {
         String projectRoot = args[0];
         String outputZip = args[1];
 
+        // Add timestamp to filename
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm"));
+        String stampedOutputZip = outputZip.replace(".zip", "_" + timestamp + ".zip");
+
         try {
-            createZipArchive(projectRoot, outputZip);
-            File zipFile = new File(outputZip).getAbsoluteFile();
+            createZipArchive(projectRoot, stampedOutputZip);
+            File zipFile = new File(stampedOutputZip).getAbsoluteFile();
             System.out.println("Project archived successfully to " + zipFile.getAbsolutePath());
         } catch (IOException e) {
             System.err.println("Error creating archive: " + e.getMessage());
