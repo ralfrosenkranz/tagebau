@@ -1,11 +1,9 @@
 package de.ralfrosenkranz.springboot.tagebau.server.repository;
 
-import de.ralfrosenkranz.springboot.tagebau.server.model.Category;
+import de.ralfrosenkranz.springboot.tagebau.server.model.Catalog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, String> {
-    
-    Category findByName(String name);
+public interface CatalogRepository extends JpaRepository<Catalog, Long> {
 }
