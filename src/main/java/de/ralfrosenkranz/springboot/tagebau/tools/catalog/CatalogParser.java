@@ -99,7 +99,7 @@ public class CatalogParser {
                 prod.setInventory(inventory);
             }
 
-/*            
+
             // shipping
             JsonNode sh = p.path("shipping");
             if (!sh.isMissingNode() && sh.isObject()) {
@@ -111,7 +111,7 @@ public class CatalogParser {
                 shipping.setNotes(sh.path("notes").asText(null));
                 prod.setShipping(shipping);
             }
-*/
+
 
             // media/images
             JsonNode m = p.path("media");

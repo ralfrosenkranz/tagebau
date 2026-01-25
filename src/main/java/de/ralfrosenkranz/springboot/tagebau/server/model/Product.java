@@ -52,8 +52,8 @@ public class Product {
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private Inventory inventory;
 
-    //@OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    //private Shipping shipping;
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Shipping shipping;
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private ProductMedia media;
@@ -86,12 +86,8 @@ public class Product {
     public void setPricing(Pricing pricing) { this.pricing = pricing; }
     public Inventory getInventory() { return inventory; }
     public void setInventory(Inventory inventory) { this.inventory = inventory; }
-    //public Shipping getShipping() { return shipping; }
-    //public void setShipping(Shipping shipping) { this.shipping = shipping; }
-    
-public Object getShipping() { return null; }
-public void setShipping(Object shipping) {  }
-
+    public Shipping getShipping() { return shipping; }
+    public void setShipping(Shipping shipping) { this.shipping = shipping; }
     public ProductMedia getMedia() { return media; }
     public void setMedia(ProductMedia media) { this.media = media; }
 }

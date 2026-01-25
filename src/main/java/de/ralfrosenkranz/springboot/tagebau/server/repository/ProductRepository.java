@@ -15,10 +15,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findBySku(String sku);
     
     List<Product> findByCategory(String category);
-    
-    @Query("SELECT p FROM Product p WHERE p.name LIKE %:keyword% OR p.description LIKE %:keyword%")
+
+    @Query("SELECT p FROM Product p WHERE " +
+            "p.technicalName LIKE %:keyword% OR " +
+            "p.nickname LIKE %:keyword% OR " +
+            "CHARINDEX(:keyword, p.shortDescription) > 0 OR "  +
+            "CHARINDEX(:keyword, p.longDescriptionMarkdown) > 0")
     List<Product> findByKeyword(@Param("keyword") String keyword);
-    
+
     List<Product> findByPriceBetween(Double minPrice, Double maxPrice);
 
     List<Product> findByBrand(String brand);
