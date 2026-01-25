@@ -3,6 +3,7 @@ package de.ralfrosenkranz.springboot.tagebau.server.service;
 import de.ralfrosenkranz.springboot.tagebau.Tagebau;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Catalog;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CatalogService {
@@ -13,6 +14,7 @@ public class CatalogService {
         this.tagebau = tagebau;
     }
 
+    @Transactional(readOnly = true)
     public Catalog getCatalog() {
 
         synchronized (tagebau) {

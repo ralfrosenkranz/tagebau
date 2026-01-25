@@ -16,9 +16,7 @@ public class ImageService {
     public ByteArrayResource getImageResourceAsJpegByteArray(String imageFilePath) {
         try {
             // Determine the resource path - assuming it's relative to classpath:/static/
-            //String resourcePath = "static/" + imageFilePath;
             String resourcePath = "static/tagebau/" + imageFilePath;
-            //String resourcePath = imageFilePath;
 
             // Get the resource from classpath
             org.springframework.core.io.Resource resource = new org.springframework.core.io.ClassPathResource(resourcePath);

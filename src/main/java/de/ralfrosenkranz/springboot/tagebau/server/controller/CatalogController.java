@@ -8,6 +8,7 @@ import de.ralfrosenkranz.springboot.tagebau.server.model.MediaImage;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Product;
 import de.ralfrosenkranz.springboot.tagebau.server.service.CatalogService;
 import de.ralfrosenkranz.springboot.tagebau.server.service.ImageService;
+import de.ralfrosenkranz.springboot.tagebau.server.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
@@ -25,6 +26,9 @@ public class CatalogController {
 
     @Autowired
     CatalogService catalogService;
+
+    @Autowired
+    ProductService productService;
 
     @Autowired
     ImageService imageService;
@@ -53,7 +57,7 @@ public class CatalogController {
         // TODO: Filter/Sort/Pagination implementieren
 
         Catalog catalog = catalogService.getCatalog();
-        List<Product> productList = catalog.getProductsByCategoryId (categoryId);
+        List<Product> productList = productService.getProductsByCategoryId(categoryId);
 
         List<ProductCardDTO> contentList = productList.stream()
                 .map(product -> {
@@ -84,8 +88,7 @@ public class CatalogController {
     public ResponseEntity<ByteArrayResource> getProductThumbnail(
             @PathVariable("productId") String productId
     ) {
-        Catalog catalog = catalogService.getCatalog();
-        Product product = catalog.getProductByProductId (productId);
+        Product product = productService.getProductByProductId (productId);
         ByteArrayResource bytearrayJpegResource = null;
 
         if (product != null) {
