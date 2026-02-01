@@ -79,7 +79,7 @@ public class ProjectArchiver {
     }
 
     private static boolean isTargetFile(String fileName) {
-        String[] targetExtensions = {".java", ".xhtml", ".js", ".css", "pom.xml", ".properties", ".yaml", ".yml"};
+        String[] targetExtensions = {".java", ".xhtml", ".js", ".css", "pom.xml", ".properties", ".yaml", ".yml", ".json"};
         for (String ext : targetExtensions) {
             if (fileName.endsWith(ext)) {
                 return true;

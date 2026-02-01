@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@SessionScope
 public class CategoryController {
 
     @GetMapping("/categories")

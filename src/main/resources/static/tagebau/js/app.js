@@ -213,7 +213,10 @@
     }catch(_e){}
   }
 
-    var api = new window.TagebauApi.ApiClient({baseUrl: "/api"});
+    //var api = new window.TagebauApi.ApiClient({baseUrl: "/api"});
+    var scriptUrl = document.currentScript?.src || "";
+    var baseUrl = scriptUrl.includes("tagebau") ? "/tagebau/api" : "/api";
+    var api = new window.TagebauApi.ApiClient({baseUrl: baseUrl});
 
     async function refreshCartBadge() {
         var badge = qs("#cartCount");

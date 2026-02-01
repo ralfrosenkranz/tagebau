@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
-@SessionScope
 public class ProductController {
 
     @Autowired
