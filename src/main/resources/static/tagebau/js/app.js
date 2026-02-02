@@ -3,7 +3,7 @@
     // ---- Debug: mark dynamically updated DOM elements ----
     // Green = update succeeded (value changed from default and is non-empty),
     // Red   = update attempted but result is unchanged from default OR empty (e.g., server returned empty/invalid data).
-    var DEBUG_MARK_DYNAMIC = false;
+    var DEBUG_MARK_DYNAMIC = true;
 
     function _styleMark(e, ok) {
         if (!DEBUG_MARK_DYNAMIC || !e) return;
@@ -316,15 +316,26 @@
     }
 
     function renderRowProduct(p) {
+        // openapi-catalog.yaml -> components.schemas.ProductCard
         var id = p && p.id ? p.id : "";
         var name = (p && (p.nickname || p.technicalName)) ? (p.nickname || p.technicalName) : "Produkt";
-        var price = p && p.price ? fmtMoney(p.price.amount, p.price.currency) : "";
-        var thumb = safeUrl(p && p.thumbnailUrl);
+
+        var currency = (p && p.pricing && p.pricing.currency) ? p.pricing.currency : "";
+        var amount = (p && p.pricing) ? p.pricing.priceExorbitant : null;
+        var price = (amount === null || amount === undefined) ? "" : fmtMoney(amount, currency);
+
+        var thumb = safeUrl(p && p.thumbnail && p.thumbnail.thumbnailFile);
+        var thumbMissing = !thumb;
         if (!thumb) thumb = "img/products/excavator-320x180.png";
-        var subtitle = p && p.technicalName ? p.technicalName : "";
+
+        var subtitleParts = [];
+        if (p && p.technicalName) subtitleParts.push(p.technicalName);
+        if (p && p.inventory && p.inventory.availability) subtitleParts.push(p.inventory.availability);
+        if (p && p.inventory && typeof p.inventory.stockQty === "number") subtitleParts.push("Bestand: " + p.inventory.stockQty);
+        var subtitle = subtitleParts.join(" • ");
         return (
             '<div class="rowitem" data-product-id="' + encodeURIComponent(id) + '">' +
-            '<img src="' + thumb + '" alt="' + escapeHtml(name) + '" />' +
+            '<img src="' + thumb + '" alt="' + escapeHtml(name) + '" ' + (thumbMissing ? 'data-thumb-missing="1"' : '') + ' />' +
             '<div>' +
             '<div class="name">' + escapeHtml(name) + '</div>' +
             '<div class="sub">' + escapeHtml(subtitle) + '</div>' +
@@ -342,32 +353,136 @@
         if (!root) return;
 
         var catList = qs("#categoryList", root);
+        var catLinks = qs("#categoryLinks", root) || catList;
         var prodList = qs("#productList", root);
 
+        var metaSchemaEl = qs("[data-catalog-schema]", root);
+        var metaGenEl = qs("[data-catalog-generated]", root);
+
+        var sortSel = qs("#sortSelect", root);
+        var pageSel = qs("#pageSelect", root);
+        var sizeSel = qs("#sizeSelect", root);
+        var condIn = qs("#filterCondition", root);
+        var availIn = qs("#filterAvailability", root);
+        var minPriceIn = qs("#filterMinPrice", root);
+        var maxPriceIn = qs("#filterMaxPrice", root);
+        var applyBtn = qs("#filterApply", root);
+
+        var catNameEl = qs("[data-category-name]", root);
+        var countEl = qs("[data-products-count]", root);
+        var pagingWrap = qs("[data-paging]", root);
+
         // Debug: these areas are expected to be dynamically populated
-        markDynamicAttempt(catList);
+        markDynamicAttempt(catLinks);
         markDynamicAttempt(prodList);
+        markDynamicAttempt(metaSchemaEl);
+        markDynamicAttempt(metaGenEl);
+        markDynamicAttempt(catNameEl);
+        markDynamicAttempt(countEl);
+        markDynamicAttempt(pageSel);
+        markDynamicAttempt(sizeSel);
+        markDynamicAttempt(sortSel);
+        markDynamicAttempt(condIn);
+        markDynamicAttempt(availIn);
+        markDynamicAttempt(minPriceIn);
+        markDynamicAttempt(maxPriceIn);
+
         var activeCategoryId = getParam("categoryId");
 
+        // Seed controls from URL
+        function seedControl(el, val){
+          if(!el) return;
+          if(el.tagName && el.tagName.toLowerCase() === "select"){
+            if(val !== null && val !== undefined) el.value = String(val);
+          } else {
+            el.value = (val === null || val === undefined) ? "" : String(val);
+          }
+          markDynamicResult(el, val);
+        }
+        seedControl(sortSel, getParam("sort") || "");
+        seedControl(pageSel, (getParam("page") || "0"));
+        seedControl(sizeSel, (getParam("size") || "24"));
+        seedControl(condIn, getParam("condition") || "");
+        seedControl(availIn, getParam("availability") || "");
+        seedControl(minPriceIn, getParam("minPrice") || "");
+        seedControl(maxPriceIn, getParam("maxPrice") || "");
+
+        function updateUrlParam(k, v){
+          var u = new URL(window.location.href);
+          if(v === undefined || v === null || String(v).trim() === "") u.searchParams.delete(k);
+          else u.searchParams.set(k, String(v));
+          history.replaceState({}, "", u.toString());
+        }
+
+        function resetPage(){
+          updateUrlParam("page", "0");
+          if(pageSel) pageSel.value = "0";
+        }
+
+        function wireControls(){
+          if(sortSel){
+            sortSel.addEventListener("change", function(){
+              updateUrlParam("sort", sortSel.value);
+              resetPage();
+              loadProducts(activeCategoryId || "");
+            });
+          }
+          if(sizeSel){
+            sizeSel.addEventListener("change", function(){
+              updateUrlParam("size", sizeSel.value);
+              resetPage();
+              loadProducts(activeCategoryId || "");
+            });
+          }
+          if(pageSel){
+            pageSel.addEventListener("change", function(){
+              updateUrlParam("page", pageSel.value);
+              loadProducts(activeCategoryId || "");
+            });
+          }
+          function applyFilters(){
+            updateUrlParam("condition", condIn ? condIn.value : "");
+            updateUrlParam("availability", availIn ? availIn.value : "");
+            updateUrlParam("minPrice", minPriceIn ? minPriceIn.value : "");
+            updateUrlParam("maxPrice", maxPriceIn ? maxPriceIn.value : "");
+            resetPage();
+            loadProducts(activeCategoryId || "");
+          }
+          if(applyBtn) applyBtn.addEventListener("click", function(ev){ ev.preventDefault(); applyFilters(); });
+          [condIn, availIn, minPriceIn, maxPriceIn].forEach(function(el){
+            if(!el) return;
+            el.addEventListener("keydown", function(ev){
+              if(ev.key === "Enter"){ ev.preventDefault(); applyFilters(); }
+            });
+          });
+        }
+
+        wireControls();
+
         try {
+            // Catalog meta
+            try{
+              var meta = await api.getCatalog();
+              if(meta){
+                if(metaSchemaEl) dynText(metaSchemaEl, meta.schemaVersion || "");
+                if(metaGenEl) dynText(metaGenEl, meta.generatedAt || "");
+              } else {
+                if(metaSchemaEl) markDynamicFail(metaSchemaEl);
+                if(metaGenEl) markDynamicFail(metaGenEl);
+              }
+            }catch(_e){
+              if(metaSchemaEl) markDynamicFail(metaSchemaEl);
+              if(metaGenEl) markDynamicFail(metaGenEl);
+            }
+
             var cats = await api.listCategories();
-            if (Array.isArray(cats) && catList) {
+            if (Array.isArray(cats) && catLinks) {
                 // green if non-empty, red if empty
                 if (!activeCategoryId && cats && cats.length) {
                     activeCategoryId = String(cats[0].id || "");
                 }
-                var header = catList.querySelector("div");
-                var hr = catList.querySelector("hr");
-                catList.innerHTML = "";
-                if (header) {
-                    catList.appendChild(header);
-                } else {
-                    var h = document.createElement("div");
-                    h.style.fontWeight = "900";
-                    h.style.paddingTop = "4px";
-                    h.textContent = "Kategorien";
-                    catList.appendChild(h);
-                }
+                // Only rewrite the links container so filters in the aside remain intact
+                catLinks.innerHTML = "";
                 cats.forEach(function (c) {
                     var tmp = document.createElement("div");
                     tmp.innerHTML = renderCategoryLink(c, activeCategoryId);
@@ -376,23 +491,24 @@
                         ev.preventDefault();
                         var u = new URL(window.location.href);
                         u.searchParams.set("categoryId", c.id);
+                        u.searchParams.set("page", "0");
                         history.replaceState({}, "", u.toString());
-                        qsa("a", catList).forEach(function (x) {
+                        qsa("a", catLinks).forEach(function (x) {
                             x.classList.remove("active");
                         });
                         a.classList.add("active");
+                        activeCategoryId = String(c.id || "");
                         loadProducts(String(c.id || ""));
                     });
-                    catList.appendChild(a);
+                    catLinks.appendChild(a);
                 });
-                if (hr) catList.appendChild(hr);
-                markDynamicResult(catList, (cats && cats.length) ? 'non-empty' : '');
+                markDynamicResult(catLinks, (cats && cats.length) ? 'non-empty' : '');
             }
             await loadProducts(activeCategoryId || "");
         } catch (e) {
             console.warn("Catalog not populated (API unavailable):", e.message || e);
             markDynamicFail(root);
-            markDynamicFail(catList);
+            markDynamicFail(catLinks);
             markDynamicFail(prodList);
         }
 
@@ -402,29 +518,111 @@
                 markDynamicFail(prodList);
                 return;
             }
-            var q = getParam("q") || undefined;
-            var sort = getParam("sort") || "popularity";
+            // openapi-catalog.yaml query params
+            var condition = getParam("condition") || undefined;
+            var availability = getParam("availability") || undefined;
+            var minPrice = getParam("minPrice");
+            var maxPrice = getParam("maxPrice");
+            var sort = getParam("sort") || undefined;
             var page = Number(getParam("page") || 0);
-            var size = Number(getParam("size") || 20);
+            var size = Number(getParam("size") || 24);
+
+            // Optional client-side search (not part of openapi-catalog.yaml)
+            var q = (getParam("q") || "").trim().toLowerCase();
 
             try {
-                var resp = await api.listProductsByCategory(categoryId, {q: q, sort: sort, page: page, size: size});
+                var params = {
+                  condition: condition,
+                  availability: availability,
+                  minPrice: (minPrice === null || minPrice === "") ? undefined : minPrice,
+                  maxPrice: (maxPrice === null || maxPrice === "") ? undefined : maxPrice,
+                  sort: sort,
+                  page: page,
+                  size: size
+                };
+
+                var resp = await api.listProductsByCategory(categoryId, params);
                 var items = [];
                 var total = 0;
-                if (Array.isArray(resp)) {
+
+                // openapi-catalog.yaml: PagedProductCard { items, page, size, totalItems }
+                if (resp && Array.isArray(resp.items)) {
+                    items = resp.items;
+                    total = (typeof resp.totalItems === "number") ? resp.totalItems : resp.items.length;
+                    // Normalize page/size from response if present
+                    if (typeof resp.page === "number") page = resp.page;
+                    if (typeof resp.size === "number") size = resp.size;
+                } else if (Array.isArray(resp)) {
+                    // tolerate older server responses
                     items = resp;
                     total = resp.length;
-                } else if (resp && Array.isArray(resp.content)) {
-                    items = resp.content;
-                    total = resp.totalElements || resp.content.length;
                 }
+
+                // Optional client-side search filter
+                if (q) {
+                    items = items.filter(function (p) {
+                        var hay = [p && p.nickname, p && p.technicalName, p && p.sku].filter(Boolean).join(" ").toLowerCase();
+                        return hay.indexOf(q) >= 0;
+                    });
+                    // totalItems refers to server-side total; with client filter we show filtered count
+                    total = items.length;
+                }
+
                 var headerRow = prodList.querySelector("div");
                 var headerHtml = headerRow ? headerRow.outerHTML : "";
                 markDynamicAttempt(prodList);
                 prodList.innerHTML = headerHtml + items.map(renderRowProduct).join("");
                 markDynamicResult(prodList, (items && items.length) ? 'non-empty' : '');
-                var countEl = prodList.querySelector(".muted");
-                if (countEl) countEl.textContent = (total + " Treffer");
+
+                // Update header labels
+                if (catNameEl) {
+                    var activeName = "";
+                    try {
+                        var a = catLinks ? catLinks.querySelector("a.active") : null;
+                        if (a) activeName = a.textContent || "";
+                    } catch (_e) {
+                    }
+                    dynText(catNameEl, activeName);
+                }
+                if (countEl) dynText(countEl, String(total));
+
+                // Paging controls
+                var pages = Math.max(1, Math.ceil((total || 0) / (size || 1)));
+                if (pageSel) {
+                    markDynamicAttempt(pageSel);
+                    pageSel.innerHTML = "";
+                    for (var i = 0; i < pages; i++) {
+                        var o = document.createElement("option");
+                        o.value = String(i);
+                        o.textContent = String(i + 1);
+                        if (i === page) o.selected = true;
+                        pageSel.appendChild(o);
+                    }
+                    markDynamicResult(pageSel, pages > 1 ? "non-empty" : "non-empty");
+                }
+                if (pagingWrap) {
+                    // Hide paging UI if only one page
+                    pagingWrap.style.display = (pages > 1) ? "flex" : "none";
+                }
+
+                // Fill missing thumbnails via /products/{id}/thumbnail
+                var missingImgs = qsa('img[data-thumb-missing="1"]', prodList);
+                missingImgs.forEach(function (imgEl) {
+                    attachImageDebug(imgEl);
+                    var pid = imgEl.parentElement && imgEl.parentElement.getAttribute("data-product-id");
+                    pid = pid ? decodeURIComponent(pid) : "";
+                    if (!pid) return;
+                    api.getProductThumbnail(pid).then(function (thumbInfo) {
+                        if (thumbInfo && thumbInfo.thumbnailFile) {
+                            imgEl.setAttribute("src", safeUrl(thumbInfo.thumbnailFile));
+                            markDynamicResult(imgEl, thumbInfo.thumbnailFile);
+                        } else {
+                            markDynamicFail(imgEl);
+                        }
+                    }).catch(function () {
+                        markDynamicFail(imgEl);
+                    });
+                });
             } catch (e) {
                 console.warn("Category products not loaded:", e.message || e);
                 markDynamicFail(prodList);

@@ -52,15 +52,18 @@
   <div>
     <div class="kicker">Katalog</div>
     <h1 style="margin-top:8px">Maschinen &amp; Fahrzeuge</h1>
-    <div class="muted" style="font-size:13px">(Später: <code>/api/categories</code> + <code>/api/categories/{id}/products</code>)</div>
+    <div class="muted" style="font-size:13px">
+      Schema: <span data-catalog-schema="true">–</span> • Stand: <span data-catalog-generated="true">–</span>
+    </div>
   </div>
   <div style="display:flex;gap:10px;align-items:center">
     <span class="muted">Sortieren:</span>
-    <select class="compact" style="width:auto">
-      <option>Beliebtheit</option>
-      <option>Preis (aufsteigend)</option>
-      <option>Preis (absteigend)</option>
-      <option>Neu</option>
+    <select class="compact" style="width:auto" id="sortSelect" aria-label="Sortierung">
+      <option value="">Standard</option>
+      <option value="nickname,asc">Name (A–Z)</option>
+      <option value="nickname,desc">Name (Z–A)</option>
+      <option value="pricing.priceExorbitant,asc">Preis (aufsteigend)</option>
+      <option value="pricing.priceExorbitant,desc">Preis (absteigend)</option>
     </select>
   </div>
 </div>
@@ -68,75 +71,46 @@
 <div class="catalog">
   <aside class="panel catlist" id="categoryList">
     <div style="font-weight:900;padding-top:4px">Kategorien</div>
-    <a class="active" href="#" onclick="return false;">Bagger</a>
-    <a href="#" onclick="return false;">Muldenkipper</a>
-    <a href="#" onclick="return false;">Bohrgeräte</a>
-    <a href="#" onclick="return false;">Radlader</a>
-    <a href="#" onclick="return false;">Ersatzteile</a>
+    <div id="categoryLinks"></div>
     <hr />
-    <div class="muted" style="font-size:12px">Filter/Suche kommt via JS (REST)</div>
+
+    <div class="muted" style="font-size:12px;margin-bottom:8px">Filter</div>
+
+    <div style="display:grid;gap:8px">
+      <label class="muted" style="font-size:12px">Zustand</label>
+      <input class="compact" id="filterCondition" type="text" placeholder="z.B. neu, gebraucht" />
+
+      <label class="muted" style="font-size:12px">Verfügbarkeit</label>
+      <input class="compact" id="filterAvailability" type="text" placeholder="z.B. sofort, vorbestellbar" />
+
+      <label class="muted" style="font-size:12px">Preis von</label>
+      <input class="compact" id="filterMinPrice" type="number" min="0" step="1" placeholder="Min" />
+
+      <label class="muted" style="font-size:12px">Preis bis</label>
+      <input class="compact" id="filterMaxPrice" type="number" min="0" step="1" placeholder="Max" />
+
+      <button class="btn hazard" id="filterApply" type="button">Anwenden</button>
+    </div>
   </aside>
 
   <section class="panel prodlist" id="productList">
     <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-end">
       <div>
-        <div style="font-weight:900">Produkte: Bagger</div>
-        <div class="muted" style="font-size:12px">4 Treffer • Demo-Daten</div>
+        <div style="font-weight:900">Produkte: <span data-category-name="true">–</span></div>
+        <div class="muted" style="font-size:12px"><span data-products-count="true">–</span> Treffer</div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center">
+      <div style="display:flex;gap:10px;align-items:center" data-paging="1">
         <span class="muted">Seite</span>
-        <select class="compact" style="width:auto">
-          <option selected="selected">1</option>
-          <option>2</option>
+        <select class="compact" style="width:auto" id="pageSelect" aria-label="Seite">
+          <option value="0" selected="selected">1</option>
         </select>
-      </div>
-    </div>
 
-    <div class="rowitem">
-      <img src="img/products/excavator-320x180.png" alt="Hydraulikbagger" />
-      <div>
-        <div class="name">Hydraulikbagger HX-980</div>
-        <div class="sub">92t • 5.2m³ • Heavy Duty</div>
-      </div>
-      <div class="price">1.850.000 €</div>
-      <div class="btnwrap" style="text-align:right">
-        <a class="btn primary" href="product.xhtml">Produkt</a>
-      </div>
-    </div>
-
-    <div class="rowitem">
-      <img src="img/products/excavator-320x180.png" alt="Kettenbagger" />
-      <div>
-        <div class="name">Kettenbagger HX-740</div>
-        <div class="sub">74t • 4.1m³ • Verstärkt</div>
-      </div>
-      <div class="price">1.240.000 €</div>
-      <div class="btnwrap" style="text-align:right">
-        <a class="btn primary" href="product.xhtml">Produkt</a>
-      </div>
-    </div>
-
-    <div class="rowitem">
-      <img src="img/products/excavator-320x180.png" alt="Umschlagbagger" />
-      <div>
-        <div class="name">Umschlagbagger HX-610</div>
-        <div class="sub">61t • Greiferpaket • 360°</div>
-      </div>
-      <div class="price">980.000 €</div>
-      <div class="btnwrap" style="text-align:right">
-        <a class="btn primary" href="product.xhtml">Produkt</a>
-      </div>
-    </div>
-
-    <div class="rowitem">
-      <img src="img/products/excavator-320x180.png" alt="Kompaktbagger" />
-      <div>
-        <div class="name">Kompaktbagger HX-220</div>
-        <div class="sub">22t • Schnellwechsel • Komfortkabine</div>
-      </div>
-      <div class="price">260.000 €</div>
-      <div class="btnwrap" style="text-align:right">
-        <a class="btn primary" href="product.xhtml">Produkt</a>
+        <span class="muted">pro Seite</span>
+        <select class="compact" style="width:auto" id="sizeSelect" aria-label="Seitengröße">
+          <option value="12">12</option>
+          <option value="24" selected="selected">24</option>
+          <option value="48">48</option>
+        </select>
       </div>
     </div>
   </section>
@@ -150,7 +124,9 @@
       <div class="row">
         <div>
           <div style="font-weight:900">Tagebau Heavy Machines</div>
+          <!--
           <div class="muted" style="font-size:12px">Static Demo • später via REST (OpenAPI) dynamisch füllen</div>
+          -->
         </div>
         <div style="display:flex;gap:14px">
           <a href="#" onclick="return false;">Impressum</a>

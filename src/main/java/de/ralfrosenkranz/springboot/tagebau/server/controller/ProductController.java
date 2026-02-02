@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.Collections;
 import java.util.List;
@@ -118,8 +117,6 @@ public class ProductController {
 
     @GetMapping("/products/{productId}/media/images")
     public ResponseEntity<List<MediaImageDTO>> listProductImages(@PathVariable("productId") String productId) {
-        // TODO: MediaImages aus ProductMedia laden
-
         Product product = productService.getProductByTolerantProductId (productId);
         if (product != null) {
             List<MediaImage> mediaImageList = product.getMedia().getImages();
@@ -142,8 +139,6 @@ public class ProductController {
             @PathVariable("productId") String productId,
             @RequestParam(name = "limit", defaultValue = "6") int limit
     ) {
-        // TODO: Related-Logik (gleiche Kategorie / ähnliche Specs)
-
         List <Product> relatedProductList = productService.getRelatedProductsByProductId (productId, limit);
 
         List<ProductCardDTO> relatedProductDTOList = relatedProductList.stream().

@@ -10,11 +10,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class ProjectArchiver {
+public class ClientArchiver {
 
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.err.println("Usage: java ProjectArchiver <project-root> <output.zip>");
+            System.err.println("Usage: java ClientArchiver <project-root> <output.zip>");
             System.exit(1);
         }
 
@@ -40,25 +40,17 @@ public class ProjectArchiver {
              ZipOutputStream zos = new ZipOutputStream(fos)) {
 
             Path rootPath = Paths.get(projectRoot);
-            Path srcPath = rootPath.resolve("src");
+            Path staticPath = rootPath.resolve("src").resolve("main").resolve("resources").resolve("static");
 
-            // Add pom.xml from root directory
-            Path pomPath = rootPath.resolve("pom.xml");
-            if (Files.exists(pomPath)) {
-                zos.putNextEntry(new ZipEntry("pom.xml"));
-                Files.copy(pomPath, zos);
-                zos.closeEntry();
-            }
-
-            if (Files.exists(srcPath) && Files.isDirectory(srcPath)) {
-                Files.walkFileTree(srcPath, new SimpleFileVisitor<Path>() {
+            if (Files.exists(staticPath) && Files.isDirectory(staticPath)) {
+                Files.walkFileTree(staticPath, new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         // Check if file matches any of the target extensions
                         String fileName = file.getFileName().toString();
                         if (isTargetFile(fileName)) {
-                            Path relativePath = srcPath.relativize(file);
-                            zos.putNextEntry(new ZipEntry("src/" + relativePath.toString().replace("\\", "/")));
+                            Path relativePath = staticPath.relativize(file);
+                            zos.putNextEntry(new ZipEntry("src/main/resources/static/" + relativePath.toString().replace("\\", "/")));
                             Files.copy(file, zos);
                             zos.closeEntry();
                         }
@@ -67,10 +59,6 @@ public class ProjectArchiver {
 
                     @Override
                     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                        // Skip hidden directories
-                        if (dir.getFileName().toString().startsWith(".")) {
-                            return FileVisitResult.SKIP_SUBTREE;
-                        }
                         return FileVisitResult.CONTINUE;
                     }
                 });
@@ -79,12 +67,14 @@ public class ProjectArchiver {
     }
 
     private static boolean isTargetFile(String fileName) {
-        String[] targetExtensions = {".java", ".xhtml", ".html", ".js", ".css", "pom.xml", ".properties", ".yaml", ".yml", ".json"};
-        for (String ext : targetExtensions) {
-            if (fileName.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
+        return  fileName.endsWith(".xml") ||
+                fileName.endsWith(".yml") ||
+                fileName.endsWith(".yaml") ||
+                fileName.endsWith(".json") ||
+                fileName.endsWith(".txt") ||
+                fileName.endsWith(".html") ||
+                fileName.endsWith(".xhtml") ||
+                fileName.endsWith(".css") ||
+                fileName.endsWith(".js");
     }
 }

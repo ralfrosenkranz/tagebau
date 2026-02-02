@@ -18,7 +18,7 @@
   <version>1.1.0</version>
   <name>tagebau</name>
   <description>Demo Webshop with AI-generated data</description>
-  <packaging>jar</packaging>
+  <packaging>jar</packaging> <!-- Je nach Deployment-Fall muss hier "jar" oder "war" stehen -->
 
   <properties>
     <!-- Hinweis: Java 25 ist für Boot 3.3.4 nicht zuverlässig belegbar; daher auf eine gängige Boot-3.x-Baseline gesetzt. -->
@@ -89,6 +89,8 @@
   </dependencies>
 
   <build>
+    <finalName>tagebau</finalName>
+
     <plugins>
       <!-- Compiler: Boot setzt passende Plugin-Versionen; release wird aus java.version abgeleitet -->
       <plugin>

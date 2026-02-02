@@ -93,6 +93,11 @@
     return this._fetchJson("/categories/" + encodeURIComponent(categoryId) + "/products" + buildQuery(params));
   };
 
+  // Catalog: product thumbnail helper (openapi-catalog.yaml)
+  ApiClient.prototype.getProductThumbnail = function(productId){
+    return this._fetchJson("/products/" + encodeURIComponent(productId) + "/thumbnail");
+  };
+
   // Product
   ApiClient.prototype.getProduct = function(productId){
     return this._fetchJson("/products/" + encodeURIComponent(productId));

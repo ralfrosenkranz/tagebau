@@ -499,3 +499,367 @@ body.product-page .gallery .thumbs img{
 }
 .markdown-render a{ color: rgba(255, 204, 0, .92); text-decoration: none; }
 .markdown-render a:hover{ text-decoration: underline; }
+
+
+
+/* ============================================================
+   Responsive-Erweiterungen (Mobile-First Patch)
+   - Ergänzungen/Overrides am Dateiende, damit sie greifen
+   - Fokus: kleine Screens, Hochkant, iOS Safe-Areas, Header/Footers
+   Quelle Basisdatei: vom Nutzer bereitgestellt
+   ============================================================ */
+
+/* 1) Safe-Area Padding (iPhone Notch / Home Indicator) */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* Container: auf sehr kleinen Screens weniger seitliches Padding */
+@media (max-width: 520px){
+  .container{
+    width: calc(100% - 24px);
+  }
+}
+
+/* 2) Header: auf Mobil stapeln und Breiten entschärfen */
+@media (max-width: 1400px){
+  :root{
+    /* etwas kompaktere Höhen auf Mobil */
+    --header-h: 64px;
+    --haz-h: 34px;
+  }
+
+  .hazard.top{ top: 0; }
+  .header{
+    top: calc(var(--haz-h) + var(--safe-top));
+    height: var(--header-h);
+  }
+
+  /* Grid -> 1 Spalte, Navigation und Actions untereinander */
+  .header .row{
+    grid-template-columns: 1fr;
+    gap: 10px;
+    height: auto;
+    padding: 10px 0;
+    align-items: start;
+  }
+
+  .brand img{ width: 40px; height: 40px; border-radius: 12px; }
+  .brand .t1{ font-size: 14px; }
+  .brand .t2{ font-size: 11px; }
+
+  .nav{
+    gap: 8px;
+  }
+  .nav a{
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .actions{
+    justify-content: flex-start;
+    width: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .search{
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 14px;
+  }
+  .search input{
+    width: 100%;
+    max-width: none;
+    min-width: 0; /* verhindert flex-overflow */
+  }
+
+  .btn{
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .cart{
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Main: mehr Platz für gestapelten Header */
+  .main{
+    padding-top: calc(var(--haz-h) + var(--header-h) + var(--safe-top) + 18px);
+    padding-bottom: calc(var(--haz-h) + 24px + var(--safe-bottom));
+  }
+}
+
+/* 3) Footer: Safe-Area und bessere Touch-Ziele */
+.footer{
+  padding-bottom: var(--safe-bottom);
+}
+@media (max-width: 1400px){
+  .footer .row{
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 16px;
+    padding: 10px 0;
+  }
+  .footer a{
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+}
+
+/* 4) Produktkarten-Grid: auf sehr kleinen Screens 1 Karte pro Reihe */
+@media (max-width: 520px){
+  .grid{
+    gap: 12px;
+  }
+  .card{
+    grid-column: span 12;
+    border-radius: 20px;
+  }
+  h1{ font-size: 28px; }
+  .hero .content{
+    min-height: 260px;
+    padding: 16px;
+  }
+}
+
+/* 5) Listenzeilen (.rowitem) auf Mobil: Bild oben, Text darunter */
+@media (max-width: 520px){
+  .rowitem{
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .rowitem img{
+    width: 100%;
+    height: auto;
+    max-height: 180px;
+    justify-self: center;
+  }
+  .rowitem .price{
+    text-align: left;
+  }
+}
+
+/* 6) Produktseite: Gallery/Thumbs weiter verkleinern */
+@media (max-width: 520px){
+  body.product-page .gallery .mainimg{
+    width: 100%;
+    max-width: 100%;
+  }
+  body.product-page .gallery .thumbs{
+    width: 100%;
+    gap: 8px;
+  }
+  body.product-page .gallery .thumbs img{
+    width: 80px;
+    height: 80px;
+  }
+  .gallery .navbtn{
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+  }
+  .gallery .navbtn.left{ left: 10px; }
+  .gallery .navbtn.right{ right: 10px; }
+}
+
+/* 7) Cart Layout: bessere Lesbarkeit auf Mobil */
+@media (max-width: 520px){
+  .cartitems, .summary{
+    padding: 12px;
+  }
+  .sumrow{
+    padding: 8px 0;
+  }
+}
+
+/* 8) iOS Smooth Scrolling für scrollbare Bereiche */
+body.product-page .main{
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 9) Optional: sehr schmale Screens (<=360px) */
+@media (max-width: 360px){
+  .btn{ padding: 0 12px; }
+  .kicker{ font-size: 11px; }
+  .cart .label{ font-size: 12px; }
+}
+
+/* ============================================================
+   Mobile: Header & Footer nicht über dem Content, sondern mitscrollen
+   ============================================================ */
+@media (max-width: 1400px){
+
+  /* Header in normalen Flow, darf wachsen */
+  .hazard.top,
+  .header{
+    position: static;
+    height: auto;        /* WICHTIG: feste Höhe aufheben */
+  }
+
+  /* Header-Layout: stapeln, nichts darf "ausbrechen" */
+  .header .row{
+    height: auto;        /* feste Zeilenhöhe aufheben */
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px 0;
+    align-items: start;
+  }
+
+  .actions{
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .search{
+    width: 100%;
+  }
+  .search input{
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Content braucht jetzt keinen Header-Offset */
+  .main{
+    padding-top: 16px;
+  }
+}
+
+/* Produkt-Detail: auf Mobil nicht im .main scrollen, sondern Seite scrollen lassen */
+@media (max-width: 1400px){
+  body.product-page{
+    overflow: visible;         /* statt overflow:hidden */
+  }
+
+  body.product-page .main{
+    height: auto;              /* statt fester Höhe */
+    overflow: visible;         /* statt overflow:auto */
+    -webkit-overflow-scrolling: auto;
+  }
+
+  /* falls du den "Header mitscrollen"-Ansatz nutzt: sicherstellen */
+  body.product-page .hazard.top,
+  body.product-page .header,
+  /* body.product-page .footer removed here to keep footer visible */{
+    position: static;          /* nicht fixed */
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    transform: none;
+  }
+
+  body.product-page .main{
+    padding-top: 18px;         /* da Header nicht mehr fixed ist */
+    padding-bottom: 18px;
+  }
+}
+
+
+@media (max-width: 1400px){
+
+  /* Footer fix sichtbar, aber NICHT mehr zu niedrig */
+  .footer{
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    height: auto;                 /* feste Höhe aufheben */
+    min-height: 64px;             /* genug Platz für 1–2 Zeilen */
+    padding: 10px 0;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
+  }
+
+  /* Links dürfen umbrechen und bleiben klickbar */
+  .footer .row{
+    flex-wrap: wrap;              /* wichtig */
+    justify-content: center;
+    gap: 10px 16px;
+    padding: 0 12px;
+  }
+
+  .footer a{
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 10px;            /* größere Touch-Ziele */
+    border-radius: 12px;
+    white-space: nowrap;          /* jeder Link bleibt „am Stück“ */
+  }
+
+  /* Content bekommt unten Platz, damit nichts überdeckt wird */
+  .main{
+    padding-bottom: 110px;        /* ggf. 90–140px anpassen */
+  }
+}
+
+
+/* ============================================================
+   Fix: Footer-Links auf Produktdetailseite & kleinen Screens sichtbar
+   - Ursache: hazard.bottom (z-index:1000) kann footer überdecken,
+     besonders wenn footer bottom:0 oder z-index niedriger ist.
+   ============================================================ */
+@media (max-width: 1400px){
+  /* Footer muss über dem Hazard-Stripe liegen */
+  .footer{
+    z-index: 1200;
+    /* oberhalb der unteren Hazard-Leiste + Safe-Area */
+    bottom: calc(var(--haz-h) + var(--safe-bottom));
+    /* darf wachsen, wenn Links umbrechen */
+    height: auto;
+  }
+
+  /* Hazard bottom unter Footer schichten */
+  .hazard.bottom{
+    z-index: 900;
+  }
+
+  /* Auf Produktdetailseite Footer weiterhin fix sichtbar */
+  body.product-page .footer{
+    position: fixed;
+    left: 0;
+    right: 0;
+  }
+
+  /* Wenn body/product-page wieder normal scrollt, keine Kollision */
+  body.product-page{
+    overflow: visible;
+  }
+  body.product-page .main{
+    height: auto;
+    overflow: visible;
+  }
+}
+
+/* Mobile: Hazard-Line oben sichtbar, Header scrollt mit */
+@media (max-width: 1400px){
+
+  /* Obere Hazard-Leiste immer sichtbar */
+  .hazard.top{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--haz-h);
+    z-index: 1300; /* über Header */
+  }
+
+  /* Header ist Teil des Flows und beginnt unter der Hazard-Leiste */
+  .header{
+    position: static;
+    height: auto;
+    margin-top: calc(var(--haz-h) + env(safe-area-inset-top, 0px));
+  }
+
+  /* Content braucht keinen großen Offset (Header ist im Flow),
+     aber etwas Abstand ist ok */
+  .main{
+    padding-top: 16px;
+  }
+}

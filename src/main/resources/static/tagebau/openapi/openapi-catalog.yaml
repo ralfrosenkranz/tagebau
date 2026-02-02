@@ -138,7 +138,7 @@ components:
         id:
           type: integer
           format: int64
-          description: Catalog.id (im Model: single-root)
+#          description: Catalog.id (im Model: single-root)
         schemaVersion:
           type: string
           maxLength: 32
