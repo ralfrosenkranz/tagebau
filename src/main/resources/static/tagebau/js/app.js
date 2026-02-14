@@ -25,6 +25,11 @@
         return el.textContent || "";
     }
 
+    function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+    }
+
     function markDynamicAttempt(el) {
         if (!DEBUG_MARK_DYNAMIC || !el) return;
         try {
@@ -239,10 +244,28 @@
     function renderProductCard(p) {
         var id = p && p.id ? p.id : "";
         var name = (p && (p.nickname || p.technicalName)) ? (p.nickname || p.technicalName) : "Produkt";
-        var price = p && p.price ? fmtMoney(p.price.amount, p.price.currency) : "";
-        var thumb = safeUrl(p && (p.thumbnailUrl || (p.media && p.media.thumbnailUrl)));
+
+        // Preis: unterstützt altes Schema (price.amount/currency) und OpenAPI (pricing.priceExorbitant/currency)
+        var price = "";
+        if (p && p.pricing && (p.pricing.priceExorbitant !== undefined && p.pricing.priceExorbitant !== null)) {
+            price = fmtMoney(p.pricing.priceExorbitant, p.pricing.currency || "EUR");
+        } else if (p && p.price && (p.price.amount !== undefined && p.price.amount !== null)) {
+            price = fmtMoney(p.price.amount, p.price.currency || "EUR");
+        }
+
+        // Thumbnail: unterstützt altes Schema (thumbnailUrl/media.thumbnailUrl) und OpenAPI (thumbnail.thumbnailFile)
+        var thumb = safeUrl(
+            p && (
+                p.thumbnailUrl ||
+                (p.media && p.media.thumbnailUrl) ||
+                (p.thumbnail && p.thumbnail.thumbnailFile) ||
+                p.thumbnailFile
+            )
+        );
         if (!thumb) thumb = "img/products/excavator-560x320.png";
+
         var tag = (p && p.condition) ? p.condition : "Maschine";
+
         return (
             '<article class="card" data-product-id="' + encodeURIComponent(id) + '">' +
             '<div class="media">' +
@@ -255,12 +278,13 @@
             '<div class="price">' + escapeHtml(price) + '</div>' +
             '<div class="row">' +
             '<a class="btn primary" href="product.xhtml?id=' + encodeURIComponent(id) + '">Details</a>' +
-            '<a class="btn ghost" href="#" data-action="bookmark">Merken</a>' +
+            '<button class="btn" data-action="add-to-cart" data-product-id="' + encodeURIComponent(id) + '">In den Warenkorb</button>' +
             '</div>' +
             '</div>' +
             '</article>'
         );
     }
+
 
     async function initLanding() {
         var root = qs('[data-page="landing"]');
@@ -725,35 +749,101 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
       return String(v);
     }
 
-    function renderSpecs(specs){
-      if(!specsGrid) return;
-      var entries = [];
-      if(specs && typeof specs === "object"){
-        Object.keys(specs).forEach(function(k){
-          var v = specs[k];
-          if(v === null || v === undefined) return;
-          if(typeof v === "string" && v.trim() === "") return;
-          entries.push([k, v]);
-        });
-      }
-      if(!entries.length){
-        specsGrid.innerHTML = '<div class="muted" style="grid-column:1/-1">Keine technischen Daten verfügbar.</div>';
-        if(typeof markDynamicResult === "function") markDynamicResult(specsGrid, "");
-        return;
-      }
+    function renderSpecs(specs) {
+        // Ziel: robust gegen "specs" = undefined/null/leer und gegen unterschiedliche Formen.
+        // Layout-Stil beibehalten: bestehendes Grid-Element wird befüllt, sonst neutraler Fallback-Text.
 
-      specsGrid.innerHTML = entries.map(function(ev){
-        var key = ev[0], val = ev[1];
-        var label = SPEC_LABELS[key] || key;
-        return (
-          '<div class="spec">' +
-            '<div class="k">' + escapeHtml(label) + '</div>' +
-            '<div class="v">' + escapeHtml(fmtSpecValue(val)) + '</div>' +
-          '</div>'
+        const grid =
+            document.getElementById("specsGrid") ||
+            document.getElementById("specs") ||
+            document.querySelector("[data-specs-grid]");
+
+        if (!grid) return;
+
+        // Helper: HTML-escaping (verhindert kaputte Darstellung bei Sonderzeichen)
+        const esc = (v) =>
+            String(v ?? "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#39;");
+
+        // Helper: "muted" Text (nutzt vorhandene Styles, falls vorhanden)
+        const renderEmpty = () => {
+            grid.innerHTML = "<div class='muted'>Keine technischen Daten vorhanden</div>";
+        };
+
+        // Normalisierung:
+        // Unterstützt drei Formen:
+        //  1) Array: [{label, value}] oder [{key, value}] oder [ {name, value} ]
+        //  2) Objekt: { key: value } oder { key: { value, label? } }
+        //  3) null/undefined/leer -> empty
+        const rows = [];
+
+        if (specs == null) {
+            renderEmpty();
+            return;
+        }
+
+        if (Array.isArray(specs)) {
+            for (const item of specs) {
+                if (!item) continue;
+
+                const label = item.label ?? item.key ?? item.name;
+                const value = item.value ?? item.val ?? item.text;
+
+                if (label == null && value == null) continue;
+
+                rows.push({
+                    k: label ?? "",
+                    v: value ?? ""
+                });
+            }
+        } else if (typeof specs === "object") {
+            for (const [k, raw] of Object.entries(specs)) {
+                // raw kann primitives sein oder ein Objekt mit {value, label, ...}
+                if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+                    const label = raw.label ?? k;
+                    const value = raw.value ?? raw.val ?? raw.text ?? "";
+                    // Optional: Einheit (unit) anhängen, wenn vorhanden
+                    const unit = raw.unit ? ` ${raw.unit}` : "";
+                    rows.push({ k: label, v: `${value}${unit}` });
+                } else {
+                    rows.push({ k, v: raw });
+                }
+            }
+        } else {
+            // specs ist ein primitiver Typ -> nichts Sinnvolles zu rendern
+            renderEmpty();
+            return;
+        }
+
+        // Nichts zu rendern?
+        const nonEmpty = rows.filter(
+            (r) => String(r.v ?? "").trim() !== ""
         );
-      }).join("");
+        if (nonEmpty.length === 0) {
+            renderEmpty();
+            return;
+        }
 
-      if(typeof markDynamicResult === "function") markDynamicResult(specsGrid, "non-empty");
+        // Render:
+        // Nutzt einfache "spec"-Kacheln (funktioniert auch ohne spezielle CSS-Klassen),
+        // aber greift vorhandene Klassen falls sie im Projekt schon existieren.
+        grid.innerHTML = nonEmpty
+            .map(({ k, v }) => {
+                const key = esc(k);
+                const val = esc(v);
+
+                return `
+                    <div class="spec">
+                        <div class="spec-key">${key}</div>
+                        <div class="spec-val">${val}</div>
+                    </div>
+                `.trim();
+            })
+            .join("");
     }
 
     function extractImageUrls(mediaImages){
@@ -848,8 +938,28 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
           dynText(invEl, invTxt);
         }
         if(shipEl){
-          var s = prod.shipping;
-          dynText(shipEl, s && s.method ? ("Versand: " + s.method) : "");
+          // OpenAPI: shipping.shippingCostEur / shipping.incotermsSuggestion / shipping.notes
+          var s = prod.shipping || null;
+
+          // Kosten können als Integer EUR kommen (shippingCostEur) oder als Zahl/String (fallback)
+          var cost = s && (s.shippingCostEur !== undefined && s.shippingCostEur !== null) ? s.shippingCostEur :
+                     (prod.shippingCostEur !== undefined && prod.shippingCostEur !== null ? prod.shippingCostEur : null);
+
+          var inc = s && s.incotermsSuggestion ? s.incotermsSuggestion : "";
+          var notes = s && s.notes ? s.notes : "";
+
+          var parts = [];
+          if(cost !== null){
+            parts.push("Versand: " + fmtMoney(cost, (prod.pricing && prod.pricing.currency) ? prod.pricing.currency : "EUR"));
+          } else if (s && s.method) {
+            // Legacy fallback
+            parts.push("Versand: " + s.method);
+          }
+
+          if(inc) parts.push(inc);
+          if(notes) parts.push(notes);
+
+          dynText(shipEl, parts.join(" · "));
         }
         if(leadEl){
           var s2 = prod.shipping;
@@ -960,31 +1070,48 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
 
         markDynamicAttempt(itemsWrap);
         itemsWrap.innerHTML = "";
-        var currency = (cart && cart.currency) ? cart.currency : "€";
-        var total = (cart && cart.totalAmount) ? cart.totalAmount : "0";
-        var subtotal = total;
-        var items = (cart && Array.isArray(cart.items)) ? cart.items : [];
+
+        // OpenAPI: Cart is an Order with orderItems; totalAmount is a string.
+        var currency = "EUR";
+        var total = (cart && cart.totalAmount) ? cart.totalAmount : "0.00";
+        var items = (cart && Array.isArray(cart.orderItems)) ? cart.orderItems : [];
+
+        function num(x) {
+            var n = Number(String(x || "0").replace(",", "."));
+            return isFinite(n) ? n : 0;
+        }
+
+        var subtotal = 0;
+        if (items.length) {
+            items.forEach(function (it) {
+                subtotal += num(it.price) * (it.quantity || 0);
+            });
+        } else {
+            subtotal = num(total);
+        }
 
         if (!items.length) {
             itemsWrap.innerHTML = '<div class="muted" style="padding:14px 0">Warenkorb ist leer.</div>';
         } else {
             items.forEach(function (it) {
-                var id = it.itemId;
-                var name = it.product && (it.product.nickname || it.product.id) ? (it.product.nickname || it.product.id) : "Produkt";
-                var thumb = (it.product && it.product.thumbnailUrl) ? it.product.thumbnailUrl : "img/products/excavator-160x90.png";
+                var id = it.id;
+                var p = it.product || {};
+                var name = (p.nickname || p.technicalName || p.id) ? (p.nickname || p.technicalName || p.id) : "Produkt";
+                var thumb = "img/products/excavator-160x90.png";
                 var qty = it.quantity || 1;
-                var line = it.lineAmount || "";
+                var unit = it.price || "0.00";
+                var line = num(unit) * qty;
 
                 var row = document.createElement("div");
                 row.className = "cartrow";
                 row.innerHTML =
                     '<div class="thumb"><img src="' + safeUrl(thumb) + '" alt="' + escapeHtml(name) + '" /></div>' +
-                    '<div><div class="t">' + escapeHtml(name) + '</div><div class="muted" style="font-size:12px">Artikel-ID: ' + escapeHtml(String(id || "")) + '</div></div>' +
+                    '<div><div class="t">' + escapeHtml(name) + '</div><div class="muted" style="font-size:12px">Item-ID: ' + escapeHtml(String(id || "")) + '</div></div>' +
                     '<div class="qty">' +
                     '<label>Menge</label>' +
                     '<input type="number" min="1" value="' + qty + '" data-item-qty="true" />' +
                     '</div>' +
-                    '<div class="p">' + escapeHtml(fmtMoney(line || "", currency)) + '</div>' +
+                    '<div class="p">' + escapeHtml(fmtMoney(line, currency)) + '</div>' +
                     '<div class="btnwrap" style="text-align:right"><a class="btn ghost" href="#" data-action="remove">Entfernen</a></div>';
 
                 var qtyInput = row.querySelector('[data-item-qty]');
@@ -996,7 +1123,7 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
                             return;
                         }
                         try {
-                            await api.updateCartItem(id, {quantity: Math.floor(n)});
+                            await api.updateCartItem(id, { quantity: Math.floor(n) });
                             await loadCart();
                         } catch (e) {
                             console.warn("Update cart item failed:", e.message || e);
@@ -1022,7 +1149,7 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
             });
         }
 
-        markDynamicResult(itemsWrap, (items && items.length) ? 'non-empty' : '');
+        markDynamicResult(itemsWrap, items.length ? "non-empty" : "");
 
         if (subtotalEl) {
             markDynamicAttempt(subtotalEl);
@@ -1035,6 +1162,7 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
             markDynamicResult(totalEl, total);
         }
     }
+
 
     async function loadCart() {
         try {
@@ -1073,7 +1201,10 @@ var thumbsWrap = gallery ? qs('[data-gallery-thumbs]', gallery) : null;
         }
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
         refreshCartBadge();
         initLanding();
         initCatalog();

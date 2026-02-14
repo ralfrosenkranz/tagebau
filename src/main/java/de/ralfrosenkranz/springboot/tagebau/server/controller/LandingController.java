@@ -1,10 +1,10 @@
 package de.ralfrosenkranz.springboot.tagebau.server.controller;
 
 import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.LandingResponseDTO;
+import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.PagedProductCardDTO;
 import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.ProductCardDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.SessionScope;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,13 +17,17 @@ public class LandingController {
     public ResponseEntity<LandingResponseDTO> getLanding(
             @RequestParam(name = "topLimit", defaultValue = "8") int topLimit
     ) {
-        // TODO: mit Services/Repositories verbinden
+        // TODO: mit Services/Repositories verbinden (Hero/Highlights/Topseller/Kategorien dynamisch liefern)
         LandingResponseDTO resp = new LandingResponseDTO();
+
         LandingResponseDTO.Hero hero = new LandingResponseDTO.Hero();
-        hero.setKicker("* Schwere Maschinen • Tagebau • 24/7 Ersatzteile");
-        hero.setTitle("*Bagger, Muldenkipper & Bohrgeräte für den Tagebau");
-        hero.setText("* Robuste Technik. Hohe Nutzlast. Einsatzbereit für extreme Bedingungen.");
+        hero.setKicker("Schwere Maschinen • Tagebau • 24/7 Ersatzteile");
+        hero.setTitle("Bagger, Muldenkipper & Bohrgeräte für den Tagebau");
+        hero.setText("Robuste Technik. Hohe Nutzlast. Einsatzbereit für extreme Bedingungen.");
+        hero.setImage(null);
+
         resp.setHero(hero);
+        resp.setHighlights(Collections.emptyList());
         resp.setTopProducts(Collections.emptyList());
         resp.setCategories(Collections.emptyList());
         return ResponseEntity.ok(resp);
@@ -38,11 +42,19 @@ public class LandingController {
     }
 
     @GetMapping("/products/search")
-    public ResponseEntity<List<ProductCardDTO>> searchProducts(
+    public ResponseEntity<PagedProductCardDTO> searchProducts(
             @RequestParam(name = "q") String q,
-            @RequestParam(name = "limit", defaultValue = "20") int limit
+            @RequestParam(name = "categoryId", required = false) String categoryId,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "sort", required = false) String sort
     ) {
-        // TODO: Suche implementieren
-        return ResponseEntity.ok(Collections.emptyList());
+        // TODO: Suche implementieren (q/categoryId/sort) + Paging (page/size)
+        PagedProductCardDTO resp = new PagedProductCardDTO();
+        resp.setItems(Collections.emptyList());
+        resp.setPage(page);
+        resp.setSize(size);
+        resp.setTotalItems(0);
+        return ResponseEntity.ok(resp);
     }
 }

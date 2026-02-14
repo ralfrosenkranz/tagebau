@@ -80,8 +80,10 @@
   ApiClient.prototype.listTopProducts = function(limit){
     return this._fetchJson("/products/top" + buildQuery({ limit: limit }));
   };
-  ApiClient.prototype.searchProducts = function(q, limit){
-    return this._fetchJson("/products/search" + buildQuery({ q: q, limit: limit }));
+  ApiClient.prototype.searchProducts = function(q, params){
+    params = Object.assign({}, params || {});
+    params.q = q;
+    return this._fetchJson("/products/search" + buildQuery(params));
   };
 
   // Catalog
@@ -102,8 +104,8 @@
   ApiClient.prototype.getProduct = function(productId){
     return this._fetchJson("/products/" + encodeURIComponent(productId));
   };
-  ApiClient.prototype.listProductImages = function(productId){
-    return this._fetchJson("/products/" + encodeURIComponent(productId) + "/media/images");
+  ApiClient.prototype.listProductImages = function(productId, role){
+    return this._fetchJson("/products/" + encodeURIComponent(productId) + "/media/images" + buildQuery({ role: role }));
   };
   ApiClient.prototype.listRelatedProducts = function(productId, limit){
     return this._fetchJson("/products/" + encodeURIComponent(productId) + "/related" + buildQuery({ limit: limit }));

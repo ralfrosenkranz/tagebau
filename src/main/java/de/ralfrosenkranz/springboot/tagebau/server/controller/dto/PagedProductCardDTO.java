@@ -2,21 +2,25 @@ package de.ralfrosenkranz.springboot.tagebau.server.controller.dto;
 
 import java.util.List;
 
+/**
+ * OpenAPI: openapi-catalog.yaml#/components/schemas/PagedProductCard
+ * (Auch in openapi-landing.yaml verwendet.)
+ */
 public class PagedProductCardDTO {
-    private List<ProductCardDTO> content;
+    private List<ProductCardDTO> items;
     private int page;
     private int size;
-    private long totalElements;
-    private int totalPages;
+    private long totalItems;
 
-    public List<ProductCardDTO> getContent() { return content; }
-    public void setContent(List<ProductCardDTO> content) { this.content = content; }
+    public List<ProductCardDTO> getItems() { return items; }
+    public void setItems(List<ProductCardDTO> items) { this.items = items; }
+
     public int getPage() { return page; }
     public void setPage(int page) { this.page = page; }
+
     public int getSize() { return size; }
     public void setSize(int size) { this.size = size; }
-    public long getTotalElements() { return totalElements; }
-    public void setTotalElements(long totalElements) { this.totalElements = totalElements; }
-    public int getTotalPages() { return totalPages; }
-    public void setTotalPages(int totalPages) { this.totalPages = totalPages; }
+
+    public long getTotalItems() { return totalItems; }
+    public void setTotalItems(long totalItems) { this.totalItems = totalItems; }
 }

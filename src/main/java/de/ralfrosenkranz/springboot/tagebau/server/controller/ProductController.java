@@ -1,18 +1,17 @@
 package de.ralfrosenkranz.springboot.tagebau.server.controller;
 
-import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.InquiryRequestDTO;
-import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.MediaImageDTO;
-import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.ProductCardDTO;
+import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.*;
 import de.ralfrosenkranz.springboot.tagebau.server.model.MediaImage;
 import de.ralfrosenkranz.springboot.tagebau.server.model.Product;
 import de.ralfrosenkranz.springboot.tagebau.server.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -23,115 +22,98 @@ public class ProductController {
     ProductService productService;
 
     @GetMapping("/products/{productId}")
-    public ResponseEntity<ProductCardDTO> getProduct(@PathVariable("productId") String productId) {
+    public ResponseEntity<ProductDetailDTO> getProduct(@PathVariable("productId") String productId) {
         Product product = productService.getProductByTolerantProductId(productId);
-
-        if (product != null) {
-            ProductCardDTO dto = getProductCardDTO(product);
-
-            return ResponseEntity.ok(dto);
-        } else {
+        if (product == null) {
             return ResponseEntity.notFound().build();
         }
-    }
 
-    @NonNull
-    private static ProductCardDTO getProductCardDTO(Product product) {
-        ProductCardDTO dto = new ProductCardDTO();
-
-        // Set basic product information
+        ProductDetailDTO dto = new ProductDetailDTO();
         dto.setId(product.getId());
+        dto.setSku(product.getSku());
+        dto.setCategoryId(product.getCategoryId());
+        dto.setCategoryName(product.getCategoryName());
         dto.setTechnicalName(product.getTechnicalName());
         dto.setNickname(product.getNickname());
         dto.setCondition(product.getCondition());
         dto.setShortDescription(product.getShortDescription());
         dto.setLongDescriptionMarkdown(product.getLongDescriptionMarkdown());
-        dto.setCategory(product.getCategoryName());
 
-        // Set price information
         if (product.getPricing() != null) {
-            ProductCardDTO.PricingDTO pricingDTO = new ProductCardDTO.PricingDTO();
-            pricingDTO.setCurrency(product.getPricing().getCurrency());
-            pricingDTO.setPriceExorbitant(product.getPricing().getPriceExorbitant().toString());
-            dto.setPricing(pricingDTO);
+            ProductCardDTO.PricingSummary p = new ProductCardDTO.PricingSummary();
+            p.setCurrency(product.getPricing().getCurrency());
+            p.setPriceExorbitant(product.getPricing().getPriceExorbitant());
+            p.setListPriceEvenMoreExorbitant(product.getPricing().getListPriceEvenMoreExorbitant());
+            p.setVatNote(product.getPricing().getVatNote());
+            dto.setPricing(p);
         }
 
-        // Set thumbnail URL
-        dto.setThumbnailUrl(product.getMedia().getFirstThumbnailFile());
-
-        // Set product specifications
-        if (product.getSpecs() != null) {
-            ProductCardDTO.ProductSpecsDTO specsDTO = new ProductCardDTO.ProductSpecsDTO();
-            specsDTO.setMachineType(product.getSpecs().getMachineType());
-            specsDTO.setOperatingWeightT(product.getSpecs().getOperatingWeightT());
-            specsDTO.setBucketCapacityM3(product.getSpecs().getBucketCapacityM3());
-            specsDTO.setEnginePowerKw(product.getSpecs().getEnginePowerKw());
-            specsDTO.setHoursUsed(product.getSpecs().getHoursUsed());
-            specsDTO.setBoomLengthM(product.getSpecs().getBoomLengthM());
-            specsDTO.setPayloadT(product.getSpecs().getPayloadT());
-            specsDTO.setTireSize(product.getSpecs().getTireSize());
-            specsDTO.setThroughputTph(product.getSpecs().getThroughputTph());
-            specsDTO.setBeltWidthMm(product.getSpecs().getBeltWidthMm());
-            specsDTO.setWheelDiameterM(product.getSpecs().getWheelDiameterM());
-            specsDTO.setBucketCount(product.getSpecs().getBucketCount());
-            specsDTO.setBladeCapacityM3(product.getSpecs().getBladeCapacityM3());
-            specsDTO.setHoleDiameterMm(product.getSpecs().getHoleDiameterMm());
-            specsDTO.setMaxHoleDepthM(product.getSpecs().getMaxHoleDepthM());
-            dto.setSpecs(specsDTO);
-        }
-
-        // Set inventory information
         if (product.getInventory() != null) {
-            ProductCardDTO.InventoryDTO inventoryDTO = new ProductCardDTO.InventoryDTO();
-            //inventoryDTO.setStock(product.getInventory().getStock());
-            inventoryDTO.setAvailability(product.getInventory().getAvailability());
-            dto.setInventory(inventoryDTO);
+            ProductCardDTO.InventorySummary inv = new ProductCardDTO.InventorySummary();
+            inv.setStockQty(product.getInventory().getStockQty());
+            inv.setAvailability(product.getInventory().getAvailability());
+            dto.setInventory(inv);
         }
 
-        // Set shipping information
         if (product.getShipping() != null) {
-            ProductCardDTO.ShippingDTO shippingDTO = new ProductCardDTO.ShippingDTO();
-            //shippingDTO.setShippingTime(product.getShipping().getShippingTime());
-            //shippingDTO.setShippingCost(product.getShipping().getShippingCost());
-            //shippingDTO.setFreeShipping(product.getShipping().getFreeShipping());
-            dto.setShipping(shippingDTO);
+            ProductDetailDTO.Shipping s = new ProductDetailDTO.Shipping();
+            s.setShippingCostEur(product.getShipping().getShippingCostEur());
+            s.setLeadTimeDays(product.getShipping().getLeadTimeDays());
+            s.setIncotermsSuggestion(product.getShipping().getIncotermsSuggestion());
+            s.setNotes(product.getShipping().getNotes());
+            dto.setShipping(s);
         }
 
-        // Set media images
-        if (product.getMedia() != null && product.getMedia().getImages() != null) {
-            List<ProductCardDTO.MediaImageDTO> mediaImageDTOList = product.getMedia().getImages().stream()
-                    .map(mediaImage -> {
-                        ProductCardDTO.MediaImageDTO mediaImageDTO = new ProductCardDTO.MediaImageDTO();
-                        //productCardDTO.setId(mediaImage.getId());
-                        mediaImageDTO.setUrl(mediaImage.getFile());
-                        mediaImageDTO.setRole(mediaImage.getRole());
-                        //productCardDTO.setAltText(mediaImage.getAltText());
-                        return mediaImageDTO;
-                    })
-                    .collect(Collectors.toList());
-            dto.setMediaImages(mediaImageDTOList);
+        if (product.getSpecs() != null) {
+            ProductDetailDTO.ProductSpecs sp = new ProductDetailDTO.ProductSpecs();
+            sp.setMachineType(product.getSpecs().getMachineType());
+            sp.setOperatingWeightT(product.getSpecs().getOperatingWeightT());
+            sp.setBucketCapacityM3(product.getSpecs().getBucketCapacityM3());
+            sp.setEnginePowerKw(product.getSpecs().getEnginePowerKw());
+            sp.setHoursUsed(product.getSpecs().getHoursUsed());
+            sp.setBoomLengthM(product.getSpecs().getBoomLengthM());
+            sp.setPayloadT(product.getSpecs().getPayloadT());
+            sp.setTireSize(product.getSpecs().getTireSize());
+            sp.setThroughputTph(product.getSpecs().getThroughputTph());
+            sp.setBeltWidthMm(product.getSpecs().getBeltWidthMm());
+            sp.setWheelDiameterM(product.getSpecs().getWheelDiameterM());
+            sp.setBucketCount(product.getSpecs().getBucketCount());
+            sp.setBladeCapacityM3(product.getSpecs().getBladeCapacityM3());
+            sp.setHoleDiameterMm(product.getSpecs().getHoleDiameterMm());
+            sp.setMaxHoleDepthM(product.getSpecs().getMaxHoleDepthM());
+            dto.setSpecs(sp);
         }
-        return dto;
+
+        ProductDetailDTO.Media media = new ProductDetailDTO.Media();
+        List<MediaImageDTO> images = (product.getMedia() != null && product.getMedia().getImages() != null)
+                ? product.getMedia().getImages().stream().map(ProductController::toMediaImageDTO).collect(Collectors.toList())
+                : List.of();
+        media.setImages(images);
+        dto.setMedia(media);
+
+        return ResponseEntity.ok(dto);
     }
 
-
     @GetMapping("/products/{productId}/media/images")
-    public ResponseEntity<List<MediaImageDTO>> listProductImages(@PathVariable("productId") String productId) {
-        Product product = productService.getProductByTolerantProductId (productId);
-        if (product != null) {
-            List<MediaImage> mediaImageList = product.getMedia().getImages();
-
-            List<MediaImageDTO> mediaImageDTOList = mediaImageList.stream().map(mediaImage -> {
-                MediaImageDTO dto = new MediaImageDTO();
-                dto.setFile(mediaImage.getFile());
-                dto.setThumbnailFile(mediaImage.getThumbnailFile());
-                return dto;
-            }).collect(Collectors.toList());
-
-            return ResponseEntity.ok(mediaImageDTOList);
-        } else {
-            return ResponseEntity.ok(Collections.emptyList());
+    public ResponseEntity<List<MediaImageDTO>> listProductImages(
+            @PathVariable("productId") String productId,
+            @RequestParam(name = "role", required = false) String role
+    ) {
+        Product product = productService.getProductByTolerantProductId(productId);
+        if (product == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        List<MediaImage> imgs = (product.getMedia() != null && product.getMedia().getImages() != null)
+                ? product.getMedia().getImages()
+                : List.of();
+
+        List<MediaImageDTO> dto = imgs.stream()
+                .filter(mi -> role == null || role.isBlank() || (mi.getRole() != null && role.equalsIgnoreCase(mi.getRole())))
+                .map(ProductController::toMediaImageDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/products/{productId}/related")
@@ -139,20 +121,29 @@ public class ProductController {
             @PathVariable("productId") String productId,
             @RequestParam(name = "limit", defaultValue = "6") int limit
     ) {
-        List <Product> relatedProductList = productService.getRelatedProductsByProductId (productId, limit);
-
-        List<ProductCardDTO> relatedProductDTOList = relatedProductList.stream().
-                map(product -> {
-            ProductCardDTO dto = getProductCardDTO(product);
-            return dto;
-        }).collect(Collectors.toList());
-
-        return ResponseEntity.ok(relatedProductDTOList);
+        // TODO: Ähnlichkeitslogik (z.B. gleiche Kategorie, ähnliche Specs) – aktuell über Service
+        List<Product> related = productService.getRelatedProductsByProductId(productId, limit);
+        List<ProductCardDTO> dto = related.stream().map(CatalogController::toProductCard).collect(Collectors.toList());
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/inquiries")
-    public ResponseEntity<Void> createInquiry(@RequestBody InquiryRequestDTO body) {
-        // TODO: Anfrage speichern / Mail schicken
-        return ResponseEntity.accepted().build();
+    public ResponseEntity<InquiryResponseDTO> createInquiry(@RequestBody InquiryRequestDTO body) {
+        // TODO: Anfrage speichern / Mail schicken / Workflow starten
+        InquiryResponseDTO resp = new InquiryResponseDTO();
+        resp.setId(UUID.randomUUID().toString());
+        resp.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        return ResponseEntity.status(201).body(resp);
+    }
+
+    private static MediaImageDTO toMediaImageDTO(MediaImage mi) {
+        MediaImageDTO dto = new MediaImageDTO();
+        dto.setId(mi.getId());
+        dto.setRole(mi.getRole());
+        dto.setLabel(mi.getLabel());
+        dto.setFile(mi.getFile());
+        dto.setThumbnailFile(mi.getThumbnailFile());
+        dto.setGenerationPrompt(mi.getGenerationPrompt());
+        return dto;
     }
 }

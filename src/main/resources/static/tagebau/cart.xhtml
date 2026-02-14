@@ -70,6 +70,19 @@
     <div class="sumrow total"><span>Gesamt</span><span id="cartTotal">5.160.000 €</span></div>
 
     <div style="margin-top:12px;display:grid;gap:10px">
+      <div class="field">
+        <label for="shippingAddress">Lieferadresse</label>
+        <input id="shippingAddress" type="text" placeholder="Straße, Nr., PLZ Ort, Land" />
+      </div>
+      <div class="field">
+        <label for="billingAddress">Rechnungsadresse</label>
+        <input id="billingAddress" type="text" placeholder="Straße, Nr., PLZ Ort, Land" />
+      </div>
+      <div class="field">
+        <label for="checkoutNote">Hinweis (optional)</label>
+        <input id="checkoutNote" type="text" placeholder="z.B. Baustelle/Incoterms/Zeitraum" />
+      </div>
+
       <a class="btn hazard" href="#" onclick="return false;" data-action="checkout">Zur Kasse</a>
       <a class="btn ghost" href="#" onclick="return false;">Angebot als PDF</a>
     </div>

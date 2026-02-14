@@ -1,10 +1,13 @@
 package de.ralfrosenkranz.springboot.tagebau.server.controller;
 
 import de.ralfrosenkranz.springboot.tagebau.server.controller.dto.*;
-import de.ralfrosenkranz.springboot.tagebau.server.model.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.annotation.SessionScope;
+
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/api")
@@ -13,9 +16,16 @@ public class CartController {
 
     // ---- Cart ----
     @GetMapping("/cart")
-    public ResponseEntity<CartDTO> getCart() {
+    public ResponseEntity<OrderDTO> getCart() {
         // TODO: Session-basierten Cart (Order status=PENDING) laden/erzeugen
-        return ResponseEntity.ok(new CartDTO());
+        OrderDTO cart = new OrderDTO();
+        cart.setId(0L);
+        cart.setStatus("PENDING");
+        cart.setTotalAmount("0.00");
+        cart.setCreatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        cart.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        cart.setOrderItems(Collections.emptyList());
+        return ResponseEntity.ok(cart);
     }
 
     @DeleteMapping("/cart")
@@ -25,28 +35,36 @@ public class CartController {
     }
 
     @PostMapping("/cart/items")
-    public ResponseEntity<CartDTO> addCartItem(@RequestBody CartItemAddRequestDTO body) {
+    public ResponseEntity<OrderDTO> addCartItem(@RequestBody CartItemAddRequestDTO body) {
         // TODO: Item hinzufügen
-        return ResponseEntity.ok(new CartDTO());
+        return ResponseEntity.ok(getCart().getBody());
     }
 
     @PatchMapping("/cart/items/{itemId}")
-    public ResponseEntity<CartDTO> updateCartItem(@PathVariable("itemId") Long itemId,
+    public ResponseEntity<OrderDTO> updateCartItem(@PathVariable("itemId") Long itemId,
                                                   @RequestBody CartItemUpdateRequestDTO body) {
         // TODO: Menge ändern
-        return ResponseEntity.ok(new CartDTO());
+        return ResponseEntity.ok(getCart().getBody());
     }
 
     @DeleteMapping("/cart/items/{itemId}")
-    public ResponseEntity<CartDTO> removeCartItem(@PathVariable("itemId") Long itemId) {
+    public ResponseEntity<OrderDTO> removeCartItem(@PathVariable("itemId") Long itemId) {
         // TODO: Item entfernen
-        return ResponseEntity.ok(new CartDTO());
+        return ResponseEntity.ok(getCart().getBody());
     }
 
     @PostMapping("/cart/checkout")
-    public ResponseEntity<Order> checkout(@RequestBody CheckoutRequestDTO body) {
-        // TODO: Pending-Order finalisieren, Status setzen, totals berechnen
-        return ResponseEntity.status(201).body(new Order());
+    public ResponseEntity<OrderDTO> checkout(@RequestBody CheckoutRequestDTO body) {
+        // TODO: Pending-Order finalisieren, Status setzen, totals berechnen, persistieren
+        OrderDTO order = getCart().getBody();
+        if (order != null) {
+            order.setId(1L);
+            order.setShippingAddress(body.getShippingAddress());
+            order.setBillingAddress(body.getBillingAddress());
+            order.setStatus("PAID"); // Demo
+            order.setUpdatedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        }
+        return ResponseEntity.status(201).body(order);
     }
 
     // ---- Orders ----
@@ -56,18 +74,17 @@ public class CartController {
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size
     ) {
-        // TODO: Bestellungen des Users ermitteln
+        // TODO: Bestellungen des Users ermitteln (status/page/size)
         PagedOrderDTO resp = new PagedOrderDTO();
-        resp.setContent(java.util.Collections.emptyList());
+        resp.setItems(Collections.emptyList());
         resp.setPage(page);
         resp.setSize(size);
-        resp.setTotalElements(0);
-        resp.setTotalPages(0);
+        resp.setTotalItems(0);
         return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/orders/{orderId}")
-    public ResponseEntity<Order> getOrder(@PathVariable("orderId") Long orderId) {
+    public ResponseEntity<OrderDTO> getOrder(@PathVariable("orderId") Long orderId) {
         // TODO: Order laden
         return ResponseEntity.notFound().build();
     }
@@ -75,11 +92,12 @@ public class CartController {
     // ---- Users (Demo) ----
     @PostMapping("/users/register")
     public ResponseEntity<UserPublicDTO> register(@RequestBody UserRegisterRequestDTO body) {
-        // TODO: User anlegen
+        // TODO: User anlegen (persistieren, Passwort hashen)
         UserPublicDTO u = new UserPublicDTO();
         u.setId(1L);
+        u.setUsername(body.getUsername());
         u.setEmail(body.getEmail());
-        u.setDisplayName(body.getDisplayName());
+        u.setRole("USER");
         return ResponseEntity.status(201).body(u);
     }
 

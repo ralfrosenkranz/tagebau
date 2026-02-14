@@ -1,14 +1,25 @@
 package de.ralfrosenkranz.springboot.tagebau.server.controller.dto;
 
-public class CatalogInfoDTO {
-    private String id;
-    private String name;
-    private String description;
+import java.time.OffsetDateTime;
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+/**
+ * OpenAPI: openapi-catalog.yaml#/components/schemas/CatalogInfo
+ */
+public class CatalogInfoDTO {
+    private Long id;
+    private String schemaVersion;
+    private OffsetDateTime generatedAt;
+    private String note;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getSchemaVersion() { return schemaVersion; }
+    public void setSchemaVersion(String schemaVersion) { this.schemaVersion = schemaVersion; }
+
+    public OffsetDateTime getGeneratedAt() { return generatedAt; }
+    public void setGeneratedAt(OffsetDateTime generatedAt) { this.generatedAt = generatedAt; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 }
