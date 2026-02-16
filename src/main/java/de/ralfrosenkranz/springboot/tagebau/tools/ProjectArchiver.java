@@ -50,6 +50,14 @@ public class ProjectArchiver {
                 zos.closeEntry();
             }
 
+            // Add tagebau_demo_katalog.json from root directory
+            Path catalogPath = rootPath.resolve("tagebau_demo_katalog.json");
+            if (Files.exists(catalogPath)) {
+                zos.putNextEntry(new ZipEntry("tagebau_demo_katalog.json"));
+                Files.copy(catalogPath, zos);
+                zos.closeEntry();
+            }
+
             if (Files.exists(srcPath) && Files.isDirectory(srcPath)) {
                 Files.walkFileTree(srcPath, new SimpleFileVisitor<Path>() {
                     @Override

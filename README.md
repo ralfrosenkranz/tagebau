@@ -1,37 +1,126 @@
-# Tagebau Katalog Parser + Stable Diffusion (AUTOMATIC1111) Jobrunner
+# Tagebau Webshop: Gebrauchte Großmaschinen
 
-Dieses Kommandozeilenprogramm:
-1. liest eine Katalog-JSON ein,
-2. parsed sie in Datenklassen (JPA-annotiert, für spätere SQL-Mappings),
-3. verlinkt Referenzen (Product.category_id -> Category),
-4. kann optional pro `products[].media.images[]` ein Bild über die AUTOMATIC1111-WebUI-API generieren
-   und lokal unter den im JSON definierten Pfaden speichern (plus Thumbnail).
+## Überblick
 
-## Build
-```bash
-mvn -DskipTests package
-```
+Der **Tagebau Webshop** ist ein experimentelles Demo-Projekt auf Basis
+von **Spring Boot**, das als ***persönliche Versuchsküche*** für moderne
+Backend-Architekturen, Contract-First-API-Design und KI-unterstütztes
+Programmieren dient.
 
-## Parse/Validate (ohne Bilder)
-```bash
-java -jar target/tagebau-catalog-parser-1.1.0-shaded.jar --parse <katalog.json>
-```
+Status:  ***"Work in Progress."***
 
-## Bilder generieren (Stable Diffusion WebUI / AUTOMATIC1111)
-Voraussetzungen:
-- AUTOMATIC1111 WebUI läuft lokal und API ist erreichbar (standardmäßig http://127.0.0.1:7860).
-  API-Endpunkt: POST /sdapi/v1/txt2img
+Ziel ist die schrittweise Entwicklung eines realitätsnahen Shop-Systems
+unter Einsatz moderner Methoden, Code-Generierung und KI-unterstützter
+Implementierung.
 
-Run:
-```bash
-java -jar target/tagebau-catalog-parser-1.1.0-shaded.jar --generate-images <katalog.json> <out-root> \
-  --sd-url http://127.0.0.1:7860 --size 1024x1024 --steps 30 --cfg 7.0 \
-  --sampler "DPM++ 2M Karras" --concurrency 4 --thumb 256
-```
+------------------------------------------------------------------------
 
-Prompts:
-- pro Bild wird `generation_prompt` aus dem JSON verwendet und um
-  `Stilattribute: Dramatisch, Heroisch.` ergänzt.
+## Live-Demo
 
-Hinweis:
-- Thumbnails werden deterministisch aus dem generierten Bild lokal erstellt (Center-Crop + Downscale).
+### 👉 http://tagebau.3dc.de
+
+------------------------------------------------------------------------
+
+## Screenshot
+
+![Tagebau-Webshop Screenshot](docs/TagebauShopProduktScreenshot.png)
+
+------------------------------------------------------------------------
+
+## Projektziel
+
+Dieses Projekt demonstriert:
+
+-   Contract-First-Entwicklung mit OpenAPI 3.x (YAML)
+-   API-Driven Design
+-   Generierung von Spring Boot Server-Stubs
+-   KI-gestützte Client-Generierung („VibeCoding")
+-   KI-unterstützte Backend-Implementierung
+-   KI-generiertes Datenbankmodell inkl. ORM-Anbindung
+-   Iterative, lernorientierte Erweiterung des Systems
+
+------------------------------------------------------------------------
+
+## Architektur
+
+### Contract-First Ansatz
+
+Die API wird zuerst als OpenAPI-Spezifikation definiert.\
+Die YAML-Dateien bilden die zentrale Quelle für:
+
+-   Server-Stubs
+-   API-Dokumentation
+-   Validierung
+-   Client-Generierung
+
+Dadurch wird eine klare Trennung zwischen Schnittstelle und
+Implementierung erreicht.
+
+------------------------------------------------------------------------
+
+### Backend (Spring Boot)
+
+-   Generierte Controller- und Model-Stubs auf Basis der
+    OpenAPI-Definition
+-   Manuelle Implementierung der Geschäftslogik mit gezielter
+    KI-Unterstützung
+-   Einsatz von JPA / Hibernate
+-   Validierung, Exception-Handling und saubere Schichtenarchitektur
+
+Die KI wird unterstützend eingesetzt für: - Refactoring -
+Architektur-Diskussion - Testfall-Generierung - Performance-Optimierung
+
+------------------------------------------------------------------------
+
+### Datenbankmodell
+
+Das relationale Datenbankmodell wurde initial KI-generiert und
+anschließend validiert und angepasst.
+
+Enthalten sind: - Entitäten - Relationen - Constraints - ORM-Mappings
+
+------------------------------------------------------------------------
+
+### Client -- VibeCoding
+
+Der Client wird nahezu vollständig KI-generiert auf Basis der
+OpenAPI-Spezifikation.
+
+Vorgehen: 1. OpenAPI als Single Source of Truth 2. Generierung des
+API-Clients 3. KI-gestützte Erstellung von UI-Komponenten 4. Iterative
+Optimierung
+
+------------------------------------------------------------------------
+
+## Methodische Schlagworte
+
+-   Contract-First Development
+-   OpenAPI 3
+-   Code Generation
+-   Spring Boot
+-   RESTful Architecture
+-   Domain Modeling
+-   AI-Augmented Programming
+-   Human-in-the-Loop Development
+-   Separation of Concerns
+-   Iterative Architekturentwicklung
+
+------------------------------------------------------------------------
+
+## Für HR / technische Entscheider
+
+Dieses Projekt zeigt:
+
+-   Strukturiertes API-Design
+-   Professionellen Einsatz von OpenAPI
+-   Moderne Spring-Boot-Architektur
+-   Reflektierten Umgang mit KI-gestützter Entwicklung
+-   Kombination aus Code-Generierung und manueller Qualitätssicherung
+
+------------------------------------------------------------------------
+
+## Zusammenfassung
+
+Der Tagebau-Webshop ist eine kontinuierlich wachsende Referenzanwendung,
+die Contract-First-Design, Spring Boot und KI-unterstützte
+Softwareentwicklung in einem realistischen Projektrahmen kombiniert.
